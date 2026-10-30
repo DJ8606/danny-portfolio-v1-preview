@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#10171c">
+<meta name="description" content="写一点文字，听见音乐的回应。自由打字、录音、旋律编辑、主题记忆与故事成曲，十个体验，随意切换着玩。">
+<title>DANNY · 共鸣实验室</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--bg:#10171c;--panel:#182228;--line:#324247;--ink:#e9e8dd;--muted:#a8b7b5;--teal:#a1d5c7;--warm:#e9af7b}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}body{display:flex;flex-direction:column}button,a{font:inherit}button{cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid var(--teal);outline-offset:3px}button{color:inherit}header{flex:none;border-bottom:1px solid var(--line);box-shadow:0 4px 20px #0002;z-index:2}.top{display:flex;align-items:center;justify-content:space-between;padding:13px 24px 12px;gap:16px}.brand{display:flex;align-items:center;gap:11px}.mark{font-size:27px;color:var(--teal);line-height:1}.brand strong{font-size:15px;font-weight:650;letter-spacing:.06em}.brand small{color:var(--muted);font-size:11px;margin-left:10px}.about{border:1px solid #465856;background:transparent;border-radius:30px;padding:6px 12px;font-size:12px;white-space:nowrap}.about:hover{background:#263833}.nav-wrap{padding:0 24px}nav{display:flex;gap:5px;overflow-x:auto;scrollbar-width:thin;scrollbar-color:#50615e transparent;padding:0 0 5px}nav button{border:1px solid transparent;background:transparent;border-radius:9px;padding:8px 13px;white-space:nowrap;text-align:left;flex:none;min-height:54px}nav button:hover{background:#1c2c2e}nav button[aria-current="page"]{border-color:#71998e;background:#223a35;color:#e5f5ed}nav button span{display:block;font-size:10px;color:var(--muted);letter-spacing:.08em;margin-bottom:3px}nav button[aria-current="page"] span{color:var(--teal)}nav button b{font-size:13px;font-weight:550}.context{padding:8px 24px 12px;display:flex;gap:14px;align-items:baseline;justify-content:space-between;font-size:12px;line-height:1.55}.context p{margin:0}.context #description{color:#d7e3dd}.context .tip{color:var(--muted);font-size:11px;flex:none}main{flex:1;min-height:0;position:relative}iframe{width:100%;height:100%;display:block;border:0;background:var(--bg)}.loading{position:absolute;inset:0;display:grid;place-content:center;color:var(--muted);pointer-events:none;z-index:0}.loading[hidden]{display:none}dialog{background:var(--panel);color:var(--ink);border:1px solid #50625e;border-radius:19px;max-width:540px;width:calc(100% - 32px);padding:28px;line-height:1.8;box-shadow:0 20px 80px #0008}dialog::backdrop{background:#070c10b8}dialog h2{margin:0 0 12px;font-size:24px;font-weight:600}dialog p{font-size:14px;color:#c4d0cc}dialog .close{display:block;margin:22px 0 0 auto;background:var(--teal);color:#11251f;border:0;border-radius:8px;padding:10px 22px}noscript{display:block;padding:24px;line-height:2}noscript a{color:var(--teal)}
+ .top-actions{display:flex;align-items:center;gap:8px}a.about{color:var(--ink);text-decoration:none}
+@media(min-width:1500px){.top,.nav-wrap,.context{padding-left:38px;padding-right:38px}nav{gap:10px}}
+@media(max-width:700px){.top{padding:12px 15px 10px}.brand{gap:8px}.brand strong{font-size:14px}.brand small{display:none}.nav-wrap{padding:0 10px}nav button{padding:7px 11px;min-height:51px}.context{padding:6px 15px 10px;display:block;font-size:11px}.context .tip{font-size:10px;margin-top:3px}.about{font-size:11px;padding:6px 10px}}
+@media(max-width:700px){.top-actions{gap:4px}.top-actions .about{font-size:10px;padding:6px 8px}}
+</style>
+</head>
+<body>
+<header>
+ <div class="top"><div class="brand"><span class="mark" aria-hidden="true">≈</span><strong>DANNY · 共鸣实验室</strong><small>开放试玩 · 10 个体验</small></div><div class="top-actions"><a class="about" href="../index.html?v=20261028-resonance2#/projects">← 返回作品集</a><button class="about" id="about">关于这场实验</button></div></div>
+ <div class="nav-wrap"><nav aria-label="选择一个玩法" id="versions"></nav></div>
+ <div class="context"><p id="description" aria-live="polite"></p><p class="tip">切换会结束当前演奏；想留住作品，可先用版本内的保存功能。</p></div>
+</header>
+<main id="playground" aria-label="共鸣实验室试玩区"><div class="loading" id="loading" role="status">正在打开体验…</div></main>
+<dialog id="about-dialog" aria-labelledby="about-title"><h2 id="about-title">写写，听听，随意玩。</h2><p>文字能怎样参与音乐？这里保留了共鸣实验室一路做出的不同成品。你可以打字、换声音、改旋律、试几个后续，也可以只听一听。</p><p>版本号只是探索的顺序。自由和偶然值得留下，复杂的编辑也可以试。没有哪一个是标准答案。</p><p>可输入文字的版本使用音乐规则生成声音；「故事成曲」是两个固定结尾的音乐小样。目前还不能自动理解任意文字的情绪并写成完整歌曲。</p><p>输入和音频处理都在你的浏览器里完成。无需注册，页面不上传你写下的文字。</p><button class="close" id="close-about">继续玩</button></dialog>
+<noscript>请开启浏览器 JavaScript 以使用音乐功能。也可以直接打开：<a href="versions/v01.html">自由打字</a> · <a href="versions/v06.html">边创作边修改</a> · <a href="versions/v09.html">旋律记忆</a></noscript>
+<script>
+(() => {
+ const experiences = [
+  {id:'v01',version:'V01',title:'自由打字',description:'开启声音，随意写一句话。换情绪、换乐器，听停顿后的回应。'},
+  {id:'v03',version:'V03',title:'大舞台',description:'边打字边看音符流动，也可以放大舞台，让音乐占满视野。'},
+  {id:'v04',version:'V04',title:'录下演奏',description:'保留打字即响和大舞台，把这一次演奏录下来。'},
+  {id:'v05',version:'V05',title:'两种作曲',description:'输入同一段文字，对比直接映射与加入主题、和声及发展的音乐。'},
+  {id:'v06',version:'V06',title:'边写边改',description:'选中喜欢的音符，锁住、修改，再试听并采用三个不同的后续。'},
+  {id:'v07',version:'V07',title:'换种心跳',description:'同一段录音，切换纯旋律、固定鼓点与变化的伴奏。'},
+  {id:'v08',version:'V08',title:'记住上句',description:'写三句话，对比各自生成与记住旋律主题的两种结果。'},
+  {id:'v09',version:'V09',title:'自由与呼应',description:'在自由、平衡、强呼应之间切换，也可换音色、试音或加入伴奏。'},
+  {id:'v10',version:'V10',title:'轻重缓急',description:'同样的旋律，比较机械、像说话、像演奏三种表达。'},
+  {id:'story',version:'内容实验',title:'故事成曲',description:'同一个故事，收起手机或发出照片，听两个固定结尾的音乐发展。'}
+ ];
+ const nav=document.getElementById('versions'),main=document.getElementById('playground'),loading=document.getElementById('loading');
+ let active=null,frame=null;
+ for(const exp of experiences){
+  const button=document.createElement('button');button.type='button';button.dataset.version=exp.id;
+  const number=document.createElement('span');number.textContent=exp.version;
+  const name=document.createElement('b');name.textContent=exp.title;
+  button.append(number,name);button.addEventListener('click',()=>select(exp.id,true));nav.append(button);
+ }
+ function select(id,push=false){
+  const exp=experiences.find(x=>x.id===id)||experiences[0];if(active===exp.id)return;
+  if(frame){frame.remove();frame=null;}
+  active=exp.id;loading.hidden=false;
+  document.title=exp.title+' · DANNY 共鸣实验室';
+  document.getElementById('description').textContent=exp.description;
+  for(const button of nav.children){if(button.dataset.version===active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}
+  frame=document.createElement('iframe');frame.title=exp.version+' · '+exp.title;
+  frame.allow='autoplay; fullscreen';frame.src='versions/'+exp.id+'.html';
+  const thisFrame=frame;frame.addEventListener('load',()=>{if(frame===thisFrame)loading.hidden=true;});main.append(frame);
+  const hash='#'+exp.id;if(location.hash!==hash){history[push?'pushState':'replaceState'](null,'',hash);}
+ }
+ window.addEventListener('popstate',()=>select(location.hash.slice(1)));
+ window.addEventListener('hashchange',()=>select(location.hash.slice(1)));
+ const dialog=document.getElementById('about-dialog');
+ document.getElementById('about').addEventListener('click',()=>dialog.showModal());
+ document.getElementById('close-about').addEventListener('click',()=>dialog.close());
+ dialog.addEventListener('click',event=>{const r=dialog.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)dialog.close();});
+ select(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>

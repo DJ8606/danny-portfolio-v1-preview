@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>01 插画过门 · 三张关键画面</title>
+  <style>
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:#111316;color:#f2f1ed;font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0}
+    a{color:inherit;text-decoration:none}
+    a:focus-visible{outline:2px solid #ff6946;outline-offset:5px}
+    .bar{height:64px;padding:0 clamp(18px,3.8vw,56px);display:flex;align-items:center;justify-content:space-between;gap:16px;background:#111316;border-bottom:1px solid #ffffff26;position:sticky;top:0;z-index:5;font-size:12px}
+    .brand{font-weight:800;font-size:17px;white-space:nowrap}.brand span{color:#ff6946}
+    .bar nav{display:flex;align-items:center;gap:clamp(12px,2vw,28px);color:#b9bcbd}
+    .bar nav a:hover,.bar nav a:focus-visible{color:#fff}
+    .bar .back{border-bottom:1px solid #74787a;padding-bottom:4px;white-space:nowrap}
+    .frame{height:calc(100svh - 64px);min-height:500px;position:relative;overflow:hidden;background:#f6f5f1}
+    .frame picture,.frame img{display:block;width:100%;height:100%}
+    .frame picture,.frame>img{position:absolute;inset:0 0 auto;height:calc(100% - 82px)}
+    .frame img{object-fit:cover}
+    .route img{object-position:center 53%}
+    .storybook img{object-position:center 50%}
+    .colour{background:#061b43}
+    .colour img{object-fit:contain}
+    .caption{position:absolute;inset:auto 0 0;height:82px;padding:0 clamp(18px,3.8vw,56px);display:flex;align-items:center;gap:28px;color:#151719;background:#f6f5f1}
+    .caption span{font-size:12px;font-weight:700;white-space:nowrap}
+    .caption h2{font-size:clamp(22px,2vw,32px);line-height:1.12;font-weight:500;margin:0}
+    .colour .caption{color:#fff;background:#061b43}
+    .full-art{margin-left:auto;border-bottom:1px solid #ffffff9c;padding-bottom:4px;font-size:12px;white-space:nowrap}
+    .frame-number{position:absolute;right:clamp(18px,3.8vw,56px);top:30px;font-size:12px;color:#24282a}
+    .colour .frame-number{color:#fff}
+    .note{padding:22px clamp(18px,3.8vw,56px) 28px;display:flex;gap:14px;justify-content:space-between;align-items:center;font-size:12px;color:#aeb3b5}
+    .note p{margin:0}.note a{color:#f2f1ed;border-bottom:1px solid #777;padding-bottom:4px}
+    @media(max-width:700px){
+      .bar{height:56px}.bar nav{gap:12px}.bar nav a:not(.back){display:none}
+      .frame{height:calc(100svh - 56px);min-height:430px}
+      .route img{object-position:center}
+      .storybook img{object-position:62% center}
+      .colour img{object-fit:cover;object-position:69% center}
+      .caption{height:82px;gap:12px}.caption h2{font-size:22px}
+      .frame-number{top:19px}
+      .note{display:block;line-height:1.8}.note a{display:inline-block;margin-top:8px}
+    }
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <header class="bar"><div class="brand">DANNY<span>.</span> / SIDE 01</div><nav aria-label="关键画面导航"><a href="#route">01 线刻长卷</a><a href="#storybook">02 场景插画</a><a href="#colour">03 月夜</a><a class="back" href="./?v=20261019-illustration3#/project/illustration">查看正式页面</a></nav></header>
+  <main>
+    <section class="frame route" id="route" aria-label="关键画面一：线刻长卷航路"><picture><source media="(max-width:700px)" srcset="./assets/portfolio/illustration-mobile.webp"><img src="./assets/portfolio/illustration-wide.webp" width="2000" height="800" alt="原作线刻长卷中的海岸、船只与航线"></picture><span class="frame-number">01 / 03</span><div class="caption"><span>THE ROUTE</span><h2>从一条航线开始。</h2></div></section>
+    <section class="frame storybook" id="storybook" aria-label="关键画面二：彩色场景插画"><img src="./assets/illustration-review/storybook.webp" width="2200" height="938" alt="彩色森林里，宇航员与小狗穿过彩虹" loading="lazy"><span class="frame-number">02 / 03</span><div class="caption"><span>THE WORLD</span><h2>走进另一片天地。</h2></div></section>
+    <section class="frame colour" id="colour" aria-label="关键画面三：彩色插画满屏"><img src="./assets/illustration-review/moon.webp" width="2500" height="1302" alt="蓝色夜空、金色月亮与飞舞的玉兔和鹿" loading="lazy"><span class="frame-number">03 / 03</span><div class="caption"><span>THE REVEAL</span><h2>走进画里。</h2><a class="full-art" href="./assets/illustration-review/moon.webp" target="_blank" rel="noopener">查看完整作品 ↗</a></div></section>
+  </main>
+  <footer class="note"><p>三张静态关键画面 · 正式插画页已接入可切换的大画面展示。</p><a href="./?v=20261019-illustration3#/project/illustration">查看正式插画页</a></footer>
+</body>
+</html>

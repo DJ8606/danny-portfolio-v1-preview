@@ -1,0 +1,10 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>六面网站集成演示 · DANNY ROAD</title><style>body{margin:0;background:#071323;color:#fff;font-family:system-ui}.bar{height:56px;display:flex;gap:16px;align-items:center;padding:0 22px;background:#121d34}.bar button{background:#384567;color:white;border:1px solid #ffffff55;padding:8px 12px;cursor:pointer;border-radius:8px}iframe{display:block;border:0;width:100vw;height:calc(100dvh - 56px)}#status{font-size:12px;color:#bfc6d8}</style><header class="bar"><b>DANNY · 多看一面</b><button onclick="closeRoad()">← 返回六面入口</button><span id="status">正在连接视频世界…</span></header><iframe id="road" title="DANNY ROAD 视频世界" src="../index.html" allow="fullscreen;autoplay"></iframe><script>
+const frame=document.getElementById('road');const status=document.getElementById('status');
+function closeRoad(){frame.src='about:blank';frame.style.display='none';status.textContent='视频世界已关闭。实际网站这里改为调用六面入口的返回函数。';}
+window.addEventListener('message',e=>{if(e.source!==frame.contentWindow||e.data?.source!=='DANNY_ROAD')return;
+ if(e.data.type==='DANNY_ROAD_READY')status.textContent=`已连接 · ${e.data.portals} 个入口`;
+ if(e.data.type==='DANNY_ROAD_EXIT')closeRoad();
+ if(e.data.type==='DANNY_ROAD_OPEN_WORK')status.textContent='正在观看作品';
+ if(e.data.type==='DANNY_ROAD_CLOSE_WORK')status.textContent='继续旅程';
+});
+</script></html>
