@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DANNY / 01 插画展厅样板</title>
+  <style>
+    :root{--bg:#0d141b;--panel:#17232c;--panel-hi:#22323d;--ink:#edf2f4;--muted:#91a0aa;--line:#31424e;--warm:#d28b58;--cool:#8db8c6}
+    *{box-sizing:border-box}
+    html{background:var(--bg)}
+    body{margin:0;min-width:320px;min-height:100%;overflow:hidden;background:radial-gradient(circle at 72% 20%,#273b46 0,transparent 34%),linear-gradient(135deg,#0b1117 0%,var(--bg) 55%,#101c25 100%);color:var(--ink);font-family:"Space Grotesk","Noto Sans SC","Microsoft YaHei",sans-serif;letter-spacing:.01em}
+    button,a{font:inherit;color:inherit}
+    button{border:0;background:none;cursor:pointer}
+    a{text-decoration:none}
+    button:focus-visible,a:focus-visible{outline:2px solid var(--warm);outline-offset:4px}
+    [hidden]{display:none!important}
+    .sample-shell{height:100svh;min-height:680px;display:flex;flex-direction:column;overflow:hidden}
+    .topbar{height:58px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,4vw,64px);border-bottom:1px solid #ffffff18;background:#0b1218cc;backdrop-filter:blur(16px);font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+    .brand{color:#cdd9df}.brand strong{color:var(--ink);font-weight:700}.brand em{color:var(--warm);font-style:normal}
+    .back-link{color:var(--muted);border-bottom:1px solid #87949a66;padding-bottom:4px;letter-spacing:.1em}.back-link:hover{color:var(--ink);border-color:var(--ink)}
+    .intro{flex:0 0 auto;display:flex;align-items:end;justify-content:space-between;gap:24px;padding:clamp(22px,3.6vh,42px) clamp(20px,4vw,64px) clamp(16px,2.4vh,28px)}
+    .intro-kicker{display:block;margin-bottom:12px;color:var(--cool);font:10px ui-monospace,Consolas,monospace;letter-spacing:.18em}
+    .intro h1{max-width:1000px;margin:0;font-size:clamp(30px,4.2vw,64px);font-weight:500;letter-spacing:-.045em;line-height:.98}.intro h1 span{display:inline-block;color:var(--warm)}
+    .intro-note{max-width:240px;margin:0 0 4px;color:var(--muted);font-size:12px;line-height:1.7;text-align:right}
+    .stage{position:relative;flex:1;min-height:0;margin:0 clamp(20px,4vw,64px);overflow:hidden;border:1px solid #71818a33;background:linear-gradient(145deg,#1b2a34f2,#101a22e8 52%,#10161ce8);box-shadow:inset 0 1px #ffffff14,0 30px 80px #00000042;perspective:1200px;--hero-x:0px;--hero-y:0px;--support-x:0px;--support-y:0px}
+    .stage:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 28% 8%,#f3cda32b 0,transparent 32%),radial-gradient(ellipse at 80% 80%,#7eafbd18 0,transparent 34%);z-index:0}
+    .stage:after{content:"";position:absolute;left:0;right:0;bottom:0;height:42%;pointer-events:none;opacity:.34;background:linear-gradient(170deg,transparent 0 48%,#90aebd12 49%,transparent 50%) 0 0/100% 46px,linear-gradient(10deg,transparent 0 48%,#90aebd10 49%,transparent 50%) 0 0/100% 46px;transform:perspective(420px) rotateX(58deg) translateY(32%);transform-origin:bottom center;z-index:0}
+    .stage-rail{position:absolute;inset:8% 4% 6%;border:1px solid #b3c7cf16;pointer-events:none;z-index:1}.stage-rail:before,.stage-rail:after{content:"";position:absolute;background:#d9e7e93b}.stage-rail:before{left:0;right:0;top:50%;height:1px}.stage-rail:after{top:0;bottom:0;left:68%;width:1px}
+    .artwork{position:absolute;z-index:2;display:block;padding:0;overflow:hidden;border:1px solid #c5d7dc48;background:#0a1117;box-shadow:0 26px 52px #00000065,0 0 0 1px #0a111744;transition:left .62s cubic-bezier(.22,.8,.24,1),top .62s cubic-bezier(.22,.8,.24,1),right .62s cubic-bezier(.22,.8,.24,1),bottom .62s cubic-bezier(.22,.8,.24,1),width .62s cubic-bezier(.22,.8,.24,1),height .62s cubic-bezier(.22,.8,.24,1),transform .62s cubic-bezier(.22,.8,.24,1),box-shadow .32s ease;transform-style:preserve-3d}
+    .artwork:before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(120deg,#ffffff10,transparent 28% 72%,#00000018);opacity:.9}.artwork:after{content:"";position:absolute;inset:10px;z-index:2;border:1px solid #ffffff16;pointer-events:none}
+    .artwork.is-hero{left:4%;top:5%;width:63%;height:90%;transform:translate3d(var(--hero-x),var(--hero-y),40px)}
+    .artwork.is-support-a{right:4%;top:5%;width:28%;height:42%;transform:translate3d(var(--support-x),var(--support-y),0)}
+    .artwork.is-support-b{right:4%;bottom:5%;width:28%;height:42%;transform:translate3d(var(--support-x),var(--support-y),0)}
+    .artwork:hover{border-color:#d9e7e997;box-shadow:0 30px 60px #0000007a,0 0 0 1px #d9e7e91c}.artwork:hover img{transform:scale(1.015)}
+    .artwork img{display:block;width:100%;height:100%;padding:16px;object-fit:contain;transition:transform .48s cubic-bezier(.22,.8,.24,1)}
+    .artwork.is-hero img{padding:24px}.artwork-caption{position:absolute;left:16px;right:16px;bottom:14px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;text-shadow:0 2px 12px #000}
+    .artwork-caption strong{font-size:12px;font-weight:600;letter-spacing:.08em}.artwork-caption small{color:#d9e3e7b8;font:9px ui-monospace,Consolas,monospace;letter-spacing:.08em}
+    .stage-label{position:absolute;left:4%;top:3%;z-index:3;color:#c2d4da;font:9px ui-monospace,Consolas,monospace;letter-spacing:.18em}.stage-label span{color:var(--warm)}
+    .stage-hint{position:absolute;right:4%;bottom:3%;z-index:3;color:#aab9c0;font:9px ui-monospace,Consolas,monospace;letter-spacing:.1em}
+    .stage-meta{flex:0 0 auto;display:flex;align-items:center;gap:28px;padding:clamp(15px,2.2vh,25px) clamp(20px,4vw,64px)}
+    .selection{display:flex;align-items:baseline;gap:13px;min-width:250px}.selection-index{color:var(--warm);font:11px ui-monospace,Consolas,monospace;letter-spacing:.1em}.selection strong{font-size:17px;font-weight:500}.selection p{margin:0;color:var(--muted);font-size:11px}
+    .sequence{display:flex;align-items:center;gap:7px;margin-left:auto}.sequence button{width:32px;height:28px;border-bottom:1px solid #75899466;color:#7f929d;font:10px ui-monospace,Consolas,monospace;transition:color .2s,border-color .2s}.sequence button:hover,.sequence button[aria-current="true"]{color:var(--ink);border-color:var(--warm)}
+    .view-button{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #80949d66;color:var(--ink);font-size:11px;letter-spacing:.08em;transition:background .2s,border-color .2s}.view-button:before{content:"";width:7px;height:7px;border:1px solid var(--warm);border-radius:50%;box-shadow:0 0 0 3px #d28b5822}.view-button:hover{border-color:var(--warm);background:#d28b5812}
+    .viewer{position:fixed;inset:0;z-index:10;display:grid;grid-template-columns:clamp(42px,6vw,82px) minmax(0,1fr) clamp(42px,6vw,82px);grid-template-rows:56px minmax(0,1fr) 92px;gap:0;background:#080d12ee;backdrop-filter:blur(18px);opacity:0;transition:opacity .25s ease}.viewer.is-open{opacity:1}
+    .viewer-close{grid-column:3;justify-self:end;width:56px;height:56px;color:#d9e4e7;font-size:26px;font-weight:200}.viewer-close:hover{color:var(--warm)}.viewer-nav{align-self:center;width:42px;height:72px;color:#b9cad0;font-size:28px;border:1px solid #8ba2ac33}.viewer-nav:hover{color:#fff;border-color:#d28b58aa}.viewer-prev{grid-column:1;grid-row:2;justify-self:center}.viewer-next{grid-column:3;grid-row:2;justify-self:center}
+    .viewer-main{grid-column:2;grid-row:2;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}.viewer-main img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 24px 36px #000b)}
+    .viewer-caption{grid-column:2;grid-row:3;align-self:center;display:flex;align-items:center;gap:18px;border-top:1px solid #ffffff1e;padding-top:12px}.viewer-caption span{color:var(--warm);font:10px ui-monospace,Consolas,monospace;letter-spacing:.12em}.viewer-caption strong{font-size:18px;font-weight:500}.viewer-caption small{color:var(--muted);font-size:11px}
+    body.viewer-open{overflow:hidden}
+    @media(max-width:760px){
+      body{overflow:auto}.sample-shell{height:auto;min-height:100svh;overflow:visible}.topbar{height:52px;padding:0 18px;font-size:9px}.back-link{font-size:10px}.intro{display:block;padding:25px 18px 17px}.intro-kicker{margin-bottom:10px}.intro h1{font-size:clamp(34px,10vw,48px)}.intro-note{max-width:none;margin:15px 0 0;text-align:left;font-size:11px}.stage{height:560px;min-height:560px;margin:0 18px}.stage-rail{inset:5% 4% 4%}.artwork.is-hero{left:4%;top:6%;width:92%;height:62%;transform:translate3d(var(--hero-x),var(--hero-y),40px)}.artwork.is-support-a{left:4%;right:auto;top:auto;bottom:5%;width:44%;height:23%;transform:translate3d(var(--support-x),var(--support-y),0)}.artwork.is-support-b{right:4%;bottom:5%;width:44%;height:23%;transform:translate3d(var(--support-x),var(--support-y),0)}.artwork img,.artwork.is-hero img{padding:10px}.artwork:after{inset:6px}.artwork-caption{left:9px;right:9px;bottom:8px;display:block}.artwork-caption small{display:block;margin-top:3px;font-size:7px}.stage-label{left:5%;top:2%;font-size:8px}.stage-hint{right:5%;bottom:2%;font-size:8px}.stage-meta{display:grid;grid-template-columns:1fr auto;gap:12px;padding:18px}.selection{min-width:0;display:grid;grid-template-columns:auto 1fr;gap:5px 10px}.selection p{grid-column:2}.sequence{grid-column:1;grid-row:2;margin:0}.view-button{grid-column:2;grid-row:2;justify-self:end}.viewer{grid-template-columns:38px minmax(0,1fr) 38px;grid-template-rows:52px minmax(0,1fr) 108px}.viewer-close{width:48px;height:52px}.viewer-nav{width:34px;height:58px;font-size:22px}.viewer-caption{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;padding:12px 0 0}.viewer-caption small{grid-column:2}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.stage{perspective:none}}
+  </style>
+</head>
+<body>
+  <div class="sample-shell">
+    <header class="topbar"><div class="brand"><strong>DANNY</strong><em> / </em>01 ILLUSTRATION · SAMPLE</div><a class="back-link" href="../?v=20261020-illustration-sample#/project/illustration">回到现有插画页 ↗</a></header>
+    <section class="intro" aria-labelledby="sample-title"><div><span class="intro-kicker">A ROOM FOR DRAWINGS / 01</span><h1 id="sample-title">让画面成为主角，<span>空间只是舞台。</span></h1></div><p class="intro-note">一屏只保留一个主视觉。<br>拖动看层次，点击进入细节。</p></section>
+    <main class="stage" id="stage" aria-label="插画展厅样板">
+      <div class="stage-rail" aria-hidden="true"></div><span class="stage-label">SELECTED WORKS <span>/ 03</span></span><span class="stage-hint">MOVE · SELECT · OPEN</span>
+      <button class="artwork is-hero" data-index="0" aria-label="查看作品 47 大图"><img src="../assets/illustration-gallery/47.webp" width="1400" height="729" alt="蓝色线条与金色月亮中的中秋主题插画" loading="eager" decoding="async"><span class="artwork-caption"><strong>作品 47</strong><small>HORIZONTAL / COLOUR</small></span></button>
+      <button class="artwork is-support-a" data-index="1" aria-label="查看作品 54 大图"><img src="../assets/illustration-gallery/54.webp" width="1400" height="2063" alt="紫色背景中的彩色玉兔插画" loading="eager" decoding="async"><span class="artwork-caption"><strong>作品 54</strong><small>VERTICAL / FESTIVAL</small></span></button>
+      <button class="artwork is-support-b" data-index="2" aria-label="查看梦·新信仰大图"><img src="../assets/illustration-gallery/梦-新信仰.webp" width="1400" height="2100" alt="科技光环中的数字角色插画" loading="eager" decoding="async"><span class="artwork-caption"><strong>梦·新信仰</strong><small>VERTICAL / DIGITAL</small></span></button>
+    </main>
+    <footer class="stage-meta"><div class="selection"><span class="selection-index" id="selection-index">01 / 03</span><strong id="selection-title">作品 47</strong><p id="selection-copy">横向画面，作为这一屏的视觉锚点。</p></div><nav class="sequence" aria-label="切换主作品"><button type="button" data-select="0" aria-current="true">01</button><button type="button" data-select="1" aria-current="false">02</button><button type="button" data-select="2" aria-current="false">03</button></nav><button class="view-button" id="view-button" type="button">查看大图</button></footer>
+  </div>
+  <div class="viewer" id="viewer" hidden role="dialog" aria-modal="true" aria-labelledby="viewer-title"><button class="viewer-close" id="viewer-close" type="button" aria-label="关闭作品大图">×</button><button class="viewer-nav viewer-prev" id="viewer-prev" type="button" aria-label="上一张作品">‹</button><div class="viewer-main"><img id="viewer-image" src="" alt=""><span class="viewer-title" hidden id="viewer-title"></span></div><button class="viewer-nav viewer-next" id="viewer-next" type="button" aria-label="下一张作品">›</button><div class="viewer-caption"><span id="viewer-meta">01 / 03</span><strong id="viewer-name">作品 47</strong><small>ESC 或关闭按钮返回展厅，当前位置会保留。</small></div></div>
+  <script>
+    const works=[
+      {title:'作品 47',meta:'01 / 03 · HORIZONTAL / COLOUR',copy:'横向画面，作为这一屏的视觉锚点。',src:'../assets/illustration-gallery/47.webp',alt:'蓝色线条与金色月亮中的中秋主题插画'},
+      {title:'作品 54',meta:'02 / 03 · VERTICAL / FESTIVAL',copy:'高饱和竖幅，让辅助作品也保留完整比例。',src:'../assets/illustration-gallery/54.webp',alt:'紫色背景中的彩色玉兔插画'},
+      {title:'梦·新信仰',meta:'03 / 03 · VERTICAL / DIGITAL',copy:'另一种叙事气质，放在同一套空间规则里。',src:'../assets/illustration-gallery/梦-新信仰.webp',alt:'科技光环中的数字角色插画'}
+    ];
+    const stage=document.querySelector('#stage'),artworks=[...stage.querySelectorAll('.artwork')],sequence=[...document.querySelectorAll('[data-select]')],selectionIndex=document.querySelector('#selection-index'),selectionTitle=document.querySelector('#selection-title'),selectionCopy=document.querySelector('#selection-copy'),viewer=document.querySelector('#viewer'),viewerImage=document.querySelector('#viewer-image'),viewerMeta=document.querySelector('#viewer-meta'),viewerName=document.querySelector('#viewer-name');
+    let selected=0,viewerIndex=0,viewerTimer;
+    const roleClasses=['is-hero','is-support-a','is-support-b'];
+    function selectWork(index){selected=(index+works.length)%works.length;const order=[selected,...works.map((_,i)=>(selected+i+1)%works.length)];artworks.forEach(card=>{card.classList.remove(...roleClasses);card.classList.add(roleClasses[order.indexOf(Number(card.dataset.index))]);});const work=works[selected];selectionIndex.textContent=`${String(selected+1).padStart(2,'0')} / ${String(works.length).padStart(2,'0')}`;selectionTitle.textContent=work.title;selectionCopy.textContent=work.copy;sequence.forEach(button=>button.setAttribute('aria-current',String(Number(button.dataset.select)===selected)))}
+    function updateViewer(){const work=works[viewerIndex];viewerImage.src=work.src;viewerImage.alt=work.alt;viewerMeta.textContent=work.meta;viewerName.textContent=work.title}
+    function openViewer(index){selectWork(index);viewerIndex=selected;updateViewer();viewer.hidden=false;document.body.classList.add('viewer-open');requestAnimationFrame(()=>viewer.classList.add('is-open'));document.querySelector('#viewer-close').focus()}
+    function closeViewer(){viewer.classList.remove('is-open');clearTimeout(viewerTimer);viewerTimer=setTimeout(()=>{viewer.hidden=true;document.body.classList.remove('viewer-open')},260)}
+    function stepViewer(step){viewerIndex=(viewerIndex+step+works.length)%works.length;selectWork(viewerIndex);updateViewer()}
+    artworks.forEach(card=>card.addEventListener('click',()=>openViewer(Number(card.dataset.index))));sequence.forEach(button=>button.addEventListener('click',()=>selectWork(Number(button.dataset.select))));document.querySelector('#view-button').addEventListener('click',()=>openViewer(selected));document.querySelector('#viewer-close').addEventListener('click',closeViewer);document.querySelector('#viewer-prev').addEventListener('click',()=>stepViewer(-1));document.querySelector('#viewer-next').addEventListener('click',()=>stepViewer(1));document.addEventListener('keydown',event=>{if(viewer.hidden)return;if(event.key==='Escape')closeViewer();if(event.key==='ArrowLeft')stepViewer(-1);if(event.key==='ArrowRight')stepViewer(1)});
+    if(window.matchMedia('(pointer:fine)').matches)stage.addEventListener('pointermove',event=>{const rect=stage.getBoundingClientRect(),x=(event.clientX-rect.left)/rect.width-.5,y=(event.clientY-rect.top)/rect.height-.5;stage.style.setProperty('--hero-x',`${(x*10).toFixed(2)}px`);stage.style.setProperty('--hero-y',`${(y*8).toFixed(2)}px`);stage.style.setProperty('--support-x',`${(x*-6).toFixed(2)}px`);stage.style.setProperty('--support-y',`${(y*-5).toFixed(2)}px`)});stage.addEventListener('pointerleave',()=>{stage.style.setProperty('--hero-x','0px');stage.style.setProperty('--hero-y','0px');stage.style.setProperty('--support-x','0px');stage.style.setProperty('--support-y','0px')});
+    selectWork(0);window.__illustrationSampleDebug=()=>({selected,viewerOpen:!viewer.hidden,works:works.length,roles:artworks.map(card=>roleClasses.find(role=>card.classList.contains(role)))});
+  </script>
+</body>
+</html>

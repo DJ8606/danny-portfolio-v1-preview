@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusAnchor 3.0 | 认知导航仪</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+        body { font-family: 'Inter', 'Microsoft YaHei', sans-serif; background-color: #f1f5f9; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
+        .timer-critical { color: #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        #celebration-overlay {
+            display: none; position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; flex-direction: column;
+        }
+        .bot-bounce { animation: bounce 0.6s infinite alternate; }
+        @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-20px); } }
+        .goal-card:hover { transform: translateY(-2px); transition: all 0.2s; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- Celebration Overlay -->
+    <div id="celebration-overlay">
+        <div class="bot-bounce mb-4">
+            <svg width="120" height="120" viewBox="0 0 100 100">
+                <rect x="20" y="30" width="60" height="50" rx="10" fill="#6366f1" />
+                <rect x="30" y="20" width="40" height="15" rx="5" fill="#4f46e5" />
+                <circle cx="40" cy="45" r="5" fill="white" />
+                <circle cx="60" cy="45" r="5" fill="white" />
+                <path d="M 40 60 Q 50 70 60 60" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" />
+                <rect x="45" y="80" width="10" height="10" fill="#6366f1" />
+            </svg>
+        </div>
+        <h2 class="text-4xl font-bold text-white mb-4">太棒了！目标达成！</h2>
+        <p class="text-indigo-100 text-lg mb-6">你刚刚用高效的路径战胜了碎片化！</p>
+        <button onclick="closeCelebration()" class="px-6 py-2 bg-white text-indigo-600 font-bold rounded-full hover:bg-indigo-50 transition">继续下一个挑战</button>
+    </div>
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-slate-800">FocusAnchor <span class="text-indigo-600 text-lg">v3.0</span></h1>
+                <p class="text-slate-500">不再是记录，而是直接给你执行方案</p>
+            </div>
+            <div id="current-date" class="text-right text-slate-400 font-medium"></div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column: Controls & Scenarios (4 cols) -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Adjustable Timer -->
+                <section class="glass p-6 rounded-3xl shadow-sm border-t-4 border-indigo-500">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">专注计时</h2>
+                    <div class="flex items-center justify-center gap-4 mb-6">
+                        <div id="timer-display" class="text-6xl font-light text-slate-700">25:00</div>
+                    </div>
+                    <div class="flex items-center justify-center gap-2 mb-6 bg-slate-100 p-2 rounded-2xl">
+                        <span class="text-xs text-slate-500 ml-2">设置分钟:</span>
+                        <input type="number" id="timer-input" value="25" class="w-16 p-1 text-center rounded-lg border-none outline-none font-bold text-indigo-600">
+                        <button id="timer-set" class="px-3 py-1 text-xs bg-white rounded-lg shadow-sm hover:bg-slate-50">应用</button>
+                    </div>
+                    <div class="flex justify-center gap-3">
+                        <button id="timer-start" class="flex-1 py-3 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200">开始</button>
+                        <button id="timer-pause" class="px-4 py-3 bg-slate-200 text-slate-600 rounded-2xl hover:bg-slate-300 transition">暂停</button>
+                        <button id="timer-reset" class="px-4 py-3 bg-slate-200 text-slate-600 rounded-2xl hover:bg-slate-300 transition">重置</button>
+                    </div>
+                </section>
+
+                <!-- Scenario Goal Library -->
+                <section class="glass p-6 rounded-3xl shadow-sm">
+                    <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">场景目标库 (直接点击启动)</h2>
+                    <div class="space-y-3 overflow-y-auto max-h-[500px] pr-2" id="scenario-list">
+                        <!-- Scenarios will be injected here -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Executive Path (8 cols) -->
+            <div class="lg:col-span-8">
+                <section class="glass p-8 rounded-3xl shadow-sm min-h-full">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-800">执行路径</h2>
+                            <p id="current-goal-desc" class="text-slate-500 text-sm">请从左侧选择一个目标场景，或点击新建任务</p>
+                        </div>
+                        <button id="add-task" class="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition text-sm font-medium">+ 自定义任务</button>
+                    </div>
+                    
+                    <div id="task-list" class="space-y-8">
+                        <!-- Tasks injected here -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Template -->
+    <template id="task-template">
+        <div class="task-item p-6 border border-slate-100 rounded-3xl bg-white shadow-sm group transition-all hover:shadow-md">
+            <div class="flex items-center gap-4 mb-6">
+                <input type="checkbox" class="task-done w-7 h-7 rounded-full border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                <input type="text" class="task-title flex-1 font-bold text-slate-700 outline-none focus:border-b-2 border-indigo-400 text-xl" placeholder="目标名称...">
+                <button class="delete-task opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-400 transition p-2">✕</button>
+            </div>
+            <div class="subtasks ml-11 space-y-4">
+                <!-- Subtasks here -->
+            </div>
+            <button class="add-subtask mt-6 ml-11 text-xs font-medium text-indigo-400 hover:text-indigo-600 transition flex items-center">
+                <span class="mr-1">+</span> 添加具体执行步骤
+            </button>
+        </div>
+    </template>
+
+    <template id="subtask-template">
+        <div class="flex items-start gap-3 group/sub">
+            <input type="checkbox" class="sub-done mt-1 w-5 h-5 rounded border-slate-300 text-indigo-500 cursor-pointer">
+            <div class="flex-1">
+                <input type="text" class="sub-title w-full text-sm text-slate-600 outline-none focus:text-indigo-600 bg-transparent border-b border-transparent focus:border-indigo-200 py-1" placeholder="具体执行动作...">
+            </div>
+            <button class="delete-sub opacity-0 group-hover/sub:opacity-100 text-slate-300 hover:text-red-400 transition text-xs">✕</button>
+        </div>
+    </template>
+
+    <script>
+        const scenarios = [
+            {
+                id: 'book-summary',
+                title: '📖 1小时拆解一本新书',
+                desc: '快速获取书籍核心观点，不陷入细节泥潭',
+                time: 60,
+                steps: [
+                    { title: '喂养AI：上传书籍目录或关键章节文本', done: false },
+                    { title: '提取骨架：要求 AI 总结作者的核心论点(Thesis Statement)和逻辑主线', done: false },
+                    { title: '深度挖掘：针对 3 个最感兴趣的观点，要求 AI 提供详细论据', done: false },
+                    { title: '批判思考：询问 AI 该书可能存在的漏洞或相反观点', done: false },
+                    { title: '输出成品：将上述结果整理成一张 1 页的思维导图/笔记', done: false }
+                ]
+            },
+            {
+                id: 'web-build',
+                title: '🌐 用 AI 快速搭建个人网页',
+                desc: '从零到上线，重点在原型实现而非完美主义',
+                time: 90,
+                steps: [
+                    { title: '定义需求：写出网页包含的 3 个核心版块 (如: 简介、项目、联系方式)', done: false },
+                    { title: '结构生成：让 AI 给出 HTML/Tailwind 基础结构代码', done: false },
+                    { title: '内容填充：分块让 AI 帮你润色个人简介和项目描述', done: false },
+                    { title: '样式调优：描述你想要的视觉风格(如: 极简、赛博朋克)，让 AI 修改 CSS', done: false },
+                    { title: '部署上线：使用 Vercel 或 GitHub Pages 完成发布', done: false }
+                ]
+            },
+            {
+                id: 'interview-prep',
+                title: '💼 准备一场完美的面试/汇报',
+                desc: '通过 AI 模拟压力测试，消除紧张感',
+                time: 45,
+                steps: [
+                    { title: '角色设定：给 AI 发送岗位描述(JD)，让它扮演该公司的资深面试官', done: false },
+                    { title: '模拟对练：让 AI 每次只问一个问题，你回答后，要求它给出【评分】和【优化建议】', done: false },
+                    { title: '疑难攻克：将你最担心被问到的问题交给 AI，共同打磨一个完美的回答模板', done: false },
+                    { title: '反向提问：让 AI 帮你设计 3 个能体现你深度思考的高质量反问问题', done: false }
+                ]
+            },
+            {
+                id: 'deep-learning',
+                title: '🧠 攻克一个复杂新概念',
+                desc: '使用费曼技巧，将未知变为已知',
+                time: 30,
+                steps: [
+                    { title: '极简解释：要求 AI 用 5 岁小孩能懂的话解释这个概念', done: false },
+                    { title: '类比构建：要求 AI 提供 3 个生活中的类比来具象化这个概念', done: false },
+                    { title: '反向教学：尝试用自己的话解释一遍，让 AI 挑刺并纠正错误', done: false },
+                    { title: '知识关联：询问 AI 这个概念与你已知哪个知识点有内在联系', done: false }
+                ]
+            }
+        ];
+
+        let state = {
+            tasks: [],
+            timer: { secondsLeft: 1500, isRunning: false, interval: null }
+        };
+
+        const taskListEl = document.getElementById('task-list');
+        const scenarioListEl = document.getElementById('scenario-list');
+        const timerDisplay = document.getElementById('timer-display');
+        const timerInput = document.getElementById('timer-input');
+        const timerStartBtn = document.getElementById('timer-start');
+        const timerPauseBtn = document.getElementById('timer-pause');
+        const timerResetBtn = document.getElementById('timer-reset');
+        const timerSetBtn = document.getElementById('timer-set');
+        const celebrationOverlay = document.getElementById('celebration-overlay');
+        const currentGoalDesc = document.getElementById('current-goal-desc');
+
+        function init() {
+            const savedState = localStorage.getItem('focusAnchorStateV3');
+            if (savedState) {
+                state = JSON.parse(savedState);
+                state.timer.isRunning = false;
+                state.timer.interval = null;
+            }
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('zh-CN', { 
+                year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' 
+            });
+            renderScenarios();
+            renderTasks();
+            updateTimerDisplay();
+        }
+
+        function save() {
+            localStorage.setItem('focusAnchorStateV3', JSON.stringify(state));
+        }
+
+        function renderScenarios() {
+            scenarioListEl.innerHTML = '';
+            scenarios.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'goal-card p-4 rounded-2xl bg-white border border-slate-200 cursor-pointer hover:border-indigo-400 hover:shadow-sm transition-all';
+                div.innerHTML = `
+                    <div class="font-bold text-slate-700 text-sm mb-1">${s.title}</div>
+                    <div class="text-xs text-slate-400">${s.desc}</div>
+                `;
+                div.onclick = () => applyScenario(s);
+                scenarioListEl.appendChild(div);
+            });
+        }
+
+        function applyScenario(s) {
+            state.tasks.unshift({
+                title: s.title,
+                time: s.time,
+                done: false,
+                subtasks: [...s.steps]
+            });
+            currentGoalDesc.innerText = s.desc;
+            save();
+            renderTasks();
+        }
+
+        function triggerCelebration() {
+            celebrationOverlay.style.display = 'flex';
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+
+        function closeCelebration() {
+            celebrationOverlay.style.display = 'none';
+        }
+
+        function renderTasks() {
+            taskListEl.innerHTML = '';
+            state.tasks.forEach((task, taskIdx) => {
+                const template = document.getElementById('task-template').content.cloneNode(true);
+                const titleInput = template.querySelector('.task-title');
+                const doneInput = template.querySelector('.task-done');
+                const subtasksContainer = template.querySelector('.subtasks');
+                const addSubBtn = template.querySelector('.add-subtask');
+                const deleteBtn = template.querySelector('.delete-task');
+
+                titleInput.value = task.title;
+                doneInput.checked = task.done;
+
+                titleInput.oninput = (e) => { state.tasks[taskIdx].title = e.target.value; save(); };
+                doneInput.onchange = (e) => { 
+                    state.tasks[taskIdx].done = e.target.checked; 
+                    if(e.target.checked) triggerCelebration();
+                    save(); 
+                };
+                
+                deleteBtn.onclick = () => {
+                    state.tasks.splice(taskIdx, 1);
+                    save();
+                    renderTasks();
+                };
+
+                task.subtasks.forEach((sub, subIdx) => {
+                    subtasksContainer.appendChild(createSubtaskElement(taskIdx, subIdx, sub));
+                });
+
+                addSubBtn.onclick = () => {
+                    state.tasks[taskIdx].subtasks.push({ title: '', done: false });
+                    save();
+                    renderTasks();
+                };
+
+                taskListEl.appendChild(template);
+            });
+        }
+
+        function createSubtaskElement(taskIdx, subIdx, sub) {
+            const template = document.getElementById('subtask-template').content.cloneNode(true);
+            const titleInput = template.querySelector('.sub-title');
+            const doneInput = template.querySelector('.sub-done');
+            const deleteBtn = template.querySelector('.delete-sub');
+
+            titleInput.value = sub.title;
+            doneInput.checked = sub.done;
+
+            titleInput.oninput = (e) => { state.tasks[taskIdx].subtasks[subIdx].title = e.target.value; save(); };
+            doneInput.onchange = (e) => { 
+                state.tasks[taskIdx].subtasks[subIdx].done = e.target.checked; 
+                if(e.target.checked) confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+                save(); 
+            };
+            deleteBtn.onclick = () => {
+                state.tasks[taskIdx].subtasks.splice(subIdx, 1);
+                save();
+                renderTasks();
+            };
+
+            return template;
+        }
+
+        document.getElementById('add-task').onclick = () => {
+            state.tasks.push({ title: '', time: 25, done: false, subtasks: [] });
+            save();
+            renderTasks();
+        };
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(state.timer.secondsLeft / 60);
+            const secs = state.timer.secondsLeft % 60;
+            timerDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            if (state.timer.secondsLeft < 300) {
+                timerDisplay.classList.add('timer-critical');
+            } else {
+                timerDisplay.classList.remove('timer-critical');
+            }
+        }
+
+        timerSetBtn.onclick = () => {
+            const val = parseInt(timerInput.value);
+            if(!isNaN(val)) {
+                state.timer.secondsLeft = val * 60;
+                updateTimerDisplay();
+            }
+        };
+
+        timerStartBtn.onclick = () => {
+            if (state.timer.isRunning) return;
+            state.timer.isRunning = true;
+            state.timer.interval = setInterval(() => {
+                state.timer.secondsLeft--;
+                updateTimerDisplay();
+                if (state.timer.secondsLeft <= 0) {
+                    clearInterval(state.timer.interval);
+                    state.timer.isRunning = false;
+                    triggerCelebration();
+                }
+            }, 1000);
+        };
+
+        timerPauseBtn.onclick = () => {
+            state.timer.isRunning = false;
+            clearInterval(state.timer.interval);
+        };
+
+        timerResetBtn.onclick = () => {
+            timerPauseBtn.onclick();
+            state.timer.secondsLeft = parseInt(timerInput.value || 25) * 60;
+            updateTimerDisplay();
+        };
+
+        init();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ff4f7aa8e50a609',t:'MTc3OTM4MTA0NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

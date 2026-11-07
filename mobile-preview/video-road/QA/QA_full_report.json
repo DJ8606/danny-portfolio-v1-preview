@@ -1,0 +1,119 @@
+{
+  "test_count": 18,
+  "all_portals_work": true,
+  "portal_checks": [
+    {
+      "id": "sea-balloon",
+      "open": true,
+      "close": true,
+      "title": "01 · 海上的第一幕"
+    },
+    {
+      "id": "coast-cliff",
+      "open": true,
+      "close": true,
+      "title": "02 · 海崖的故事"
+    },
+    {
+      "id": "tunnel-radio",
+      "open": true,
+      "close": true,
+      "title": "03 · 穿越隧道"
+    },
+    {
+      "id": "sky-plane",
+      "open": true,
+      "close": true,
+      "title": "04 · 天空航线"
+    },
+    {
+      "id": "forest-ufo",
+      "open": true,
+      "close": true,
+      "title": "05 · 来自宇宙的信"
+    },
+    {
+      "id": "rest-stop",
+      "open": true,
+      "close": true,
+      "title": "06 · 停靠片刻"
+    },
+    {
+      "id": "lake-window",
+      "open": true,
+      "close": true,
+      "title": "07 · 湖边来信"
+    },
+    {
+      "id": "lake-cinema",
+      "open": true,
+      "close": true,
+      "title": "08 · 露天首映"
+    },
+    {
+      "id": "scenic-town",
+      "open": true,
+      "close": true,
+      "title": "09 · 山间小镇的影像"
+    },
+    {
+      "id": "scenic-city",
+      "open": true,
+      "close": true,
+      "title": "10 · 湾岸夜城的影像"
+    },
+    {
+      "id": "scenic-raincity",
+      "open": true,
+      "close": true,
+      "title": "11 · 雨夜霓虹的影像"
+    },
+    {
+      "id": "scenic-coast",
+      "open": true,
+      "close": true,
+      "title": "12 · 夕阳海岸的影像"
+    },
+    {
+      "id": "scenic-desert",
+      "open": true,
+      "close": true,
+      "title": "13 · 沙漠落日的影像"
+    },
+    {
+      "id": "scenic-tunnel",
+      "open": true,
+      "close": true,
+      "title": "14 · 海崖隧道的影像"
+    },
+    {
+      "id": "scenic-forest",
+      "open": true,
+      "close": true,
+      "title": "15 · 森林山道的影像"
+    },
+    {
+      "id": "scenic-lake",
+      "open": true,
+      "close": true,
+      "title": "16 · 清晨湖畔的影像"
+    },
+    {
+      "id": "scenic-sakura",
+      "open": true,
+      "close": true,
+      "title": "17 · 樱花山湖的影像"
+    },
+    {
+      "id": "scenic-snow",
+      "open": true,
+      "close": true,
+      "title": "18 · 雪山公路的影像"
+    }
+  ],
+  "manager_initial": 18,
+  "manager_added": 19,
+  "config_download": "works.js",
+  "scenic_export_included": true,
+  "errors": []
+}

@@ -1,0 +1,39 @@
+/* This section extends the existing V03 palette and does not affect its other cases. */
+.phone-feature{padding:88px 0 30px;border-top:1px solid var(--stroke)}
+.phone-intro{display:grid;grid-template-columns:1fr 1fr;gap:20px 50px;align-items:end;margin-bottom:28px}
+.phone-intro .eyebrow{grid-column:1/-1}
+.phone-intro h2{margin:0;color:var(--text);font-size:clamp(30px,3.7vw,48px);font-weight:500;line-height:1.3;letter-spacing:-.04em}
+.phone-intro h2 em{font-style:normal;color:var(--gold)}
+.phone-intro p{margin:0;color:var(--dim);line-height:1.95;font-size:14px}
+.phone-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--stroke);margin:0 0 22px}
+.phone-steps span{padding:13px 16px;color:#d7d9d6;font-size:12px;border-right:1px solid var(--stroke)}
+.phone-steps span:last-child{border-right:0}.phone-steps b{color:var(--gold);font-size:10px;letter-spacing:.08em;margin-right:9px}
+.phone-workspace{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.phone-reference,.phone-viewer{margin:0;min-width:0;border:1px solid #303941;background:#141a21;border-radius:4px;overflow:hidden}
+.phone-reference{display:flex;flex-direction:column}
+.phone-reference img{display:block;width:100%;aspect-ratio:3/2;object-fit:contain;background:#f4f0e9}
+.phone-reference figcaption{flex:1;display:flex;flex-direction:column;justify-content:center;padding:22px 26px;color:var(--dim);font-size:13px}
+.phone-reference blockquote{margin:12px 0;color:#e9e6dd;font-size:18px;line-height:1.7;font-weight:400}
+.phone-reference figcaption p{margin:0;line-height:1.9}
+.phone-reference strong,.phone-viewer-label{display:block;color:#e0bb84;font-size:11px;letter-spacing:.11em;font-weight:600;margin-bottom:7px}
+.phone-viewer-header{padding:20px 22px 12px}
+.phone-viewer-header p{color:var(--dim);font-size:13px;line-height:1.75;margin:0}
+.phone-stage{height:clamp(300px,31vw,395px);position:relative;background:radial-gradient(ellipse at 50% 45%,#30443f 0%,#1b292b 55%,#151f24 100%);overflow:hidden}
+.phone-stage>img,.phone-stage>canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.phone-stage>img{object-fit:contain}.phone-stage>canvas{cursor:grab;touch-action:none}.phone-stage>canvas:active{cursor:grabbing}
+.phone-stage>img[hidden],.phone-stage>canvas[hidden]{display:none}
+.phone-stage>canvas:focus-visible{outline:2px solid var(--focus);outline-offset:-3px}
+.phone-hint{position:absolute;z-index:2;top:15px;left:16px;color:#c4d4d1;font-size:10px;letter-spacing:.03em;pointer-events:none;background:#162326bd;padding:5px 9px;border-radius:2px}
+.phone-controls,.phone-options{display:flex;flex-wrap:wrap;gap:8px}
+.phone-controls{padding:18px 22px 0}
+.phone-feature button{cursor:pointer;font:inherit;font-size:12px;color:#dbe3df;background:#1b2a2b;border:1px solid #405754;padding:10px 14px;border-radius:3px;transition:background .2s,border-color .2s}
+.phone-feature button:hover,.phone-feature button[aria-pressed=true]{border-color:#d2ab73;background:#34413c;color:#fff5df}
+.phone-feature button:disabled{opacity:.48;cursor:wait}
+.phone-status{margin:11px 22px 17px;color:#c0d2c7;font-size:12px;min-height:1.8em}
+.phone-change{border-top:1px solid #303941;padding:17px 22px 20px}
+.phone-change h3{margin:0 0 7px;font-size:16px;font-weight:500;color:#e7e4da}
+.phone-change p{color:var(--dim);font-size:12px;line-height:1.8;margin:0 0 13px}
+.phone-feature .phone-detail-link{background:none;color:#dbba87;border:0;padding:0;margin-top:12px;text-decoration:underline;text-underline-offset:3px}
+.phone-boundary{margin:17px 0 0;color:#8995a0;font-size:12px;line-height:1.9}
+@media(max-width:780px){.phone-feature{padding:65px 0 15px}.phone-intro{grid-template-columns:1fr;gap:12px}.phone-intro .eyebrow{grid-column:auto}.phone-intro h2{font-size:34px}.phone-workspace{grid-template-columns:1fr;gap:16px}.phone-stage{height:360px}}
+@media(max-width:420px){.phone-intro h2{font-size:30px}.phone-steps span{padding:11px 8px;font-size:11px}.phone-steps b{display:block;margin:0 0 3px}.phone-stage{height:310px}.phone-controls,.phone-change{padding-left:16px;padding-right:16px}.phone-status{margin-left:16px;margin-right:16px}}

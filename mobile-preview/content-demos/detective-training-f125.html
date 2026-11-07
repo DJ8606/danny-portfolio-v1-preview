@@ -1,0 +1,2870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全栈排错特工：从全景蓝图到 F12 实战演练</title>
+    <style>
+        :root {
+            --bg-dark: #070b14;
+            --panel-bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --accent-amber: #fbbf24;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        header {
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
+        .logo { font-weight: 800; font-size: 1.15rem; color: var(--accent-blue); display: flex; align-items: center; gap: 8px; }
+        .header-tools { display: flex; gap: 10px; }
+        .btn-header {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-header:hover { background: #334155; color: #fff; border-color: var(--accent-blue); }
+
+        #view-enlightenment, #view-game {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 阶段零：启蒙大地图 */
+        #view-enlightenment {
+            background: radial-gradient(circle at center, #1e293b 0%, #070b14 100%);
+            padding: 24px 36px;
+            overflow-y: auto;
+        }
+        .map-banner { text-align: center; margin-bottom: 24px; }
+        .map-banner h2 { font-size: 1.8rem; color: #fff; margin-bottom: 6px; }
+        .map-banner p { color: var(--text-muted); font-size: 0.95rem; }
+
+        .map-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .map-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .map-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-blue);
+            box-shadow: 0 15px 35px rgba(56, 189, 248, 0.15);
+        }
+        .map-card h3 { font-size: 1.1rem; color: var(--accent-blue); display: flex; align-items: center; gap: 8px; }
+        .map-role { font-size: 0.82rem; color: var(--accent-amber); font-weight: 600; }
+        .map-detail { font-size: 0.85rem; color: #cbd5e1; line-height: 1.6; }
+        .map-footer { margin-top: auto; padding-top: 10px; border-top: 1px dashed var(--border); font-size: 0.78rem; color: #94a3b8; }
+
+        .start-bar { max-width: 1200px; margin: 30px auto 10px; text-align: center; }
+        .btn-start-game {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: #fff;
+            border: none;
+            padding: 14px 40px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+            transition: all 0.3s;
+        }
+        .btn-start-game:hover { transform: scale(1.04); }
+
+        /* 阶段一：实战工作区 */
+        #workspace {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 14px;
+            padding: 14px;
+            overflow: hidden;
+        }
+
+        .window-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .window-header {
+            background: #0b1120;
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .traffic-lights { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+        .dot-red { background: #ef4444; }
+        .dot-yellow { background: #eab308; }
+        .dot-green { background: #22c55e; }
+        .url-bar {
+            background: #1e293b;
+            padding: 3px 12px;
+            border-radius: 4px;
+            flex: 1;
+            font-family: monospace;
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+
+        #shop-viewport {
+            flex: 1;
+            padding: 24px;
+            background: radial-gradient(circle at top, #1e293b 0%, #090d16 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+        }
+        .shop-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 380px;
+            padding: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        }
+        .shop-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+        .product-item { background: #0f172a; padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+        .total-box { margin-top: 14px; padding-top: 12px; border-top: 1px dashed #475569; display: flex; justify-content: space-between; font-weight: 700; font-size: 0.95rem; }
+        .btn-checkout {
+            width: 100%;
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-top: 14px;
+            transition: all 0.2s;
+        }
+        .btn-checkout:hover { background: #1d4ed8; }
+
+        #devtools { background: #030712; display: flex; flex-direction: column; }
+        .devtools-tabs { background: #0b1120; border-bottom: 1px solid var(--border); display: flex; padding: 0 8px; }
+        .dev-tab {
+            padding: 9px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .dev-tab.active { color: var(--accent-blue); border-bottom-color: var(--accent-blue); background: rgba(56, 189, 248, 0.08); }
+        .dev-tab.locked { opacity: 0.3; cursor: not-allowed; }
+
+        .dev-content { flex: 1; padding: 14px; overflow-y: auto; font-family: monospace; font-size: 0.82rem; color: #cbd5e1; }
+
+        #command-center {
+            background: var(--panel-bg);
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 180px;
+            max-height: 220px;
+            z-index: 10;
+        }
+        .mission-header { display: flex; justify-content: space-between; align-items: center; }
+        .mission-title { font-size: 0.95rem; font-weight: 800; color: #fff; }
+        .mission-feedback { font-size: 0.85rem; font-weight: 600; }
+        .question-box { color: #fef08a; font-size: 0.9rem; font-weight: 600; background: rgba(254, 240, 138, 0.08); padding: 8px 12px; border-radius: 6px; border-left: 3px solid var(--accent-amber); }
+        .options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+        .btn-opt {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            padding: 9px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-align: left;
+            transition: all 0.2s;
+        }
+        .btn-opt:hover { background: #334155; border-color: var(--accent-blue); }
+        .btn-opt.wrong { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #fca5a5; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 860px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+        }
+        .modal-header {
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1e293b;
+        }
+        .modal-body { padding: 20px; overflow-y: auto; font-size: 0.88rem; line-height: 1.6; color: #cbd5e1; }
+        .close-btn { background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer; }
+
+        .debrief-card { background: #1e293b; border: 1px solid var(--accent-green); border-radius: 10px; padding: 18px; margin-bottom: 14px; }
+        .debrief-item { margin-bottom: 8px; display: flex; gap: 8px; }
+        .btn-next-level {
+            background: var(--accent-green);
+            color: #020617;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .f12-guide-box {
+            background: rgba(56, 189, 248, 0.08);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            color: #38bdf8;
+            font-size: 0.8rem;
+        }
+        .css-rule-box { background: #0b1120; border: 1px solid #1e293b; border-radius: 6px; padding: 10px; margin-top: 8px; }
+        .btn-fix-action {
+            background: var(--accent-green);
+            color: #030712;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 5px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 0.8rem;
+        }
+        .net-table { width: 100%; border-collapse: collapse; }
+        .net-table th, .net-table td { padding: 6px 8px; border-bottom: 1px solid #1e293b; font-size: 0.78rem; text-align: left; }
+
+        /* 全栈全息知识树样式体系 */
+        .tree-toolbar {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .tree-filter-pills {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .pill-btn {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pill-btn:hover, .pill-btn.active {
+            background: var(--accent-blue);
+            color: #030712;
+            border-color: var(--accent-blue);
+        }
+
+        .knowledge-tree-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        @media (max-width: 900px) {
+            .knowledge-tree-container { grid-template-columns: 1fr; }
+        }
+
+        .tree-branch-card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        .tree-branch-card:hover {
+            border-color: var(--accent-blue);
+            transform: translateY(-2px);
+        }
+        .branch-header {
+            padding: 14px 18px;
+            background: #131d31;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .branch-title-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .branch-icon {
+            font-size: 1.3rem;
+        }
+        .branch-name {
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+        .branch-badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            font-weight: 600;
+        }
+
+        .branch-summary {
+            padding: 12px 18px;
+            font-size: 0.82rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+        .micro-nodes-list {
+            padding: 0 18px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .micro-node-item {
+            background: #090e17;
+            border: 1px solid #1e293b;
+            padding: 7px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .micro-node-item:hover {
+            background: #1e293b;
+            border-color: var(--accent-blue);
+            color: #fff;
+        }
+
+        /* 展开式深度检修档案 (Deep Dossier) */
+        .dossier-expand-box {
+            display: none;
+            background: #060a12;
+            border-top: 1px solid var(--border);
+            padding: 16px 18px;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            animation: fadeIn 0.25s ease;
+        }
+        .dossier-expand-box.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .dossier-section {
+            margin-bottom: 12px;
+            background: #0d1422;
+            border: 1px solid #1c273c;
+            border-radius: 6px;
+            padding: 10px 14px;
+        }
+        .dossier-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-amber);
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dossier-text {
+            color: #cbd5e1;
+            font-size: 0.8rem;
+        }
+        .btn-collapse {
+            background: #1e293b;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            padding: 5px 14px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            transition: 0.2s;
+        }
+        .btn-collapse:hover {
+            background: #334155;
+            color: #fff;
+            border-color: var(--accent-blue);
+        }
+
+        /* F12 武器库全景解构馆样式 */
+        #modal-f12-codex .modal-content {
+            max-width: 960px;
+            max-height: 90vh;
+            border-color: var(--accent-amber);
+            box-shadow: 0 0 35px rgba(251, 191, 36, 0.2);
+        }
+        .codex-nav-tabs {
+            display: flex;
+            background: #0b1120;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .codex-tab-btn {
+            padding: 10px 18px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .codex-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.03); }
+        .codex-tab-btn.active {
+            color: var(--accent-amber);
+            border-bottom-color: var(--accent-amber);
+            background: rgba(251, 191, 36, 0.08);
+        }
+        .codex-pane {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+            padding: 4px;
+            animation: fadeIn 0.2s ease;
+        }
+        .codex-pane.active { display: flex; }
+
+        .codex-card {
+            background: #131d31;
+            border: 1px solid #23334d;
+            border-radius: 8px;
+            padding: 14px 18px;
+        }
+        .codex-card-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--accent-blue);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .codex-card-title.can-do { color: var(--accent-green); }
+        .codex-card-title.cant-do { color: var(--accent-red); }
+        .codex-card-title.tips { color: var(--accent-amber); }
+
+        .codex-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 768px) {
+            .codex-grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .codex-item-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            line-height: 1.55;
+        }
+        .codex-item-list li {
+            position: relative;
+            padding-left: 18px;
+        }
+        .codex-item-list li::before {
+            content: "•";
+            position: absolute;
+            left: 4px;
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+        .codex-item-list.can li::before { color: var(--accent-green); content: "✔"; font-size: 0.75rem; }
+        .codex-item-list.cant li::before { color: var(--accent-red); content: "✖"; font-size: 0.75rem; }
+        .codex-item-list.tip li::before { color: var(--accent-amber); content: "💡"; font-size: 0.75rem; }
+
+        /* F12 拟真实景透视舱样式体系 (划到哪解释到哪) */
+        #modal-f12-spotlight .modal-content {
+            max-width: 1100px;
+            max-height: 92vh;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 40px rgba(56, 189, 248, 0.25);
+            display: flex;
+            flex-direction: column;
+            background: #070b14;
+        }
+
+        .spotlight-cockpit-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.35fr;
+            gap: 14px;
+            padding: 14px;
+            flex: 1;
+            overflow: hidden;
+            background: #090e18;
+        }
+
+        /* 模拟左侧小店活体视窗 */
+        .spotlight-webpage-box {
+            background: #0f172a;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .spotlight-web-bar {
+            background: #1e293b;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-family: monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+        .spotlight-web-body {
+            flex: 1;
+            padding: 20px;
+            background: radial-gradient(circle at top, #1e293b 0%, #070b14 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .mock-cart-card {
+            background: #131d31;
+            border: 1px solid #23334d;
+            border-radius: 10px;
+            padding: 18px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: all 0.3s;
+        }
+        .mock-cart-card.highlighted {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+        }
+        .mock-item-row {
+            background: #090e17;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            border: 1px solid #1e293b;
+            transition: all 0.2s;
+        }
+        .mock-item-row.target-glow {
+            border-color: var(--accent-amber);
+            background: rgba(251, 191, 36, 0.1);
+        }
+        .mock-btn-buy {
+            width: 100%;
+            background: #00ffaa;
+            color: #000;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+        .mock-btn-buy.target-glow {
+            box-shadow: 0 0 18px #00ffaa;
+            outline: 2px dashed #fff;
+            transform: scale(1.02);
+        }
+
+        /* 模拟右侧真实的 Chrome/Edge F12 驾驶舱 */
+        .spotlight-f12-box {
+            background: #000000;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 0.76rem;
+        }
+        .f12-top-strip {
+            background: #18202f;
+            border-bottom: 1px solid #283548;
+            display: flex;
+            align-items: center;
+            height: 32px;
+            padding: 0 6px;
+            gap: 2px;
+            user-select: none;
+        }
+        .f12-tool-icon {
+            padding: 4px 8px;
+            cursor: pointer;
+            color: #94a3b8;
+            border-radius: 4px;
+            transition: 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .f12-tool-icon:hover { background: #283548; color: #fff; }
+        .f12-strip-tab {
+            padding: 5px 10px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .f12-strip-tab:hover { color: #fff; }
+        .f12-strip-tab.active {
+            color: var(--accent-blue);
+            border-bottom-color: var(--accent-blue);
+            background: rgba(56, 189, 248, 0.08);
+        }
+
+        /* F12 中部双栏：左边 DOM 树，右边 Styles */
+        .f12-center-split {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            border-bottom: 1px solid #23334d;
+            overflow: hidden;
+            background: #0a0e17;
+        }
+        .f12-dom-col {
+            border-right: 1px solid #23334d;
+            padding: 10px;
+            overflow-y: auto;
+            color: #cbd5e1;
+            line-height: 1.6;
+        }
+        .f12-styles-col {
+            padding: 10px;
+            overflow-y: auto;
+            background: #0d1320;
+            color: #cbd5e1;
+            line-height: 1.5;
+        }
+
+        /* 热区光环聚焦 (Hotspot Focus & Spotlight) */
+        .f12-hotspot {
+            position: relative;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            padding: 2px 4px;
+        }
+        .f12-hotspot:hover, .f12-hotspot.active-focus {
+            background: rgba(56, 189, 248, 0.2);
+            outline: 1.5px solid var(--accent-blue);
+        }
+
+        /* 底部“视线所及即刻解构”雷达卡片 */
+        .spotlight-radar-hud {
+            background: #0b1120;
+            border-top: 1px solid var(--border);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            min-height: 110px;
+        }
+        .radar-zone-info {
+            flex: 1;
+        }
+        .radar-zone-badge {
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--accent-amber);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .radar-zone-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #f8fafc;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .radar-zone-desc {
+            font-size: 0.82rem;
+            color: #94a3b8;
+            line-height: 1.5;
+        }
+        .radar-superpower {
+            color: #4ade80;
+            font-weight: 600;
+        }
+        .radar-taboo {
+            color: #f87171;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+
+        /* 全栈单向数据流水线 (Pipeline Flow) 样式体系 */
+        .pipeline-track-container {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .pipeline-track {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .pipeline-step-node {
+            flex: 1;
+            min-width: 200px;
+            background: #0b1120;
+            border: 1.5px solid #23334d;
+            border-radius: 10px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .pipeline-step-node:hover {
+            border-color: var(--accent-blue);
+            background: #131d31;
+            transform: translateY(-2px);
+        }
+        .pipeline-step-node.active {
+            background: rgba(56, 189, 248, 0.12);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.25);
+        }
+        .pipeline-step-node.active::after {
+            content: "";
+            position: absolute;
+            bottom: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px 8px 0 8px;
+            border-style: solid;
+            border-color: var(--accent-blue) transparent transparent transparent;
+        }
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1e293b;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            border: 1px solid #334155;
+            transition: all 0.2s;
+        }
+        .pipeline-step-node.active .step-circle {
+            background: var(--accent-blue);
+            color: #030712;
+            border-color: var(--accent-blue);
+        }
+        .step-info { display: flex; flex-direction: column; }
+        .step-title { font-size: 0.88rem; font-weight: 700; color: #f8fafc; display: flex; align-items: center; gap: 6px; }
+        .step-sub { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+        
+        .pipeline-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 0 4px;
+        }
+        .connector-line {
+            color: var(--accent-blue);
+            font-size: 1.15rem;
+            font-weight: bold;
+            animation: flowLine 2s infinite ease-in-out;
+        }
+        @keyframes flowLine {
+            0%, 100% { opacity: 0.3; transform: translateX(-2px); }
+            50% { opacity: 1; transform: translateX(2px); color: var(--accent-green); }
+        }
+        .pipeline-view-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255,255,255,0.08);
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+
+
+        /* 主视图：F12 拟真实景交互舱 */
+        #view-spotlight {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+            background: #070b14;
+        }
+        .btn-header.active-view {
+            background: rgba(56, 189, 248, 0.2) !important;
+            border-color: var(--accent-blue) !important;
+            color: #fff !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <div class="logo">⚡ 全栈排错特工局 · 系统训练舱</div>
+            <div id="game-progress-box" style="display: none; align-items: center; gap: 8px;">
+                <div style="width: 120px; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; border: 1px solid var(--border);">
+                    <div id="progress-fill" style="height: 100%; width: 20%; background: linear-gradient(90deg, #38bdf8, #4ade80); transition: width 0.4s ease;"></div>
+                </div>
+                <span id="level-badge" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-blue); font-family: monospace;">LEVEL 1/5</span>
+            </div>
+        </div>
+        <div class="header-tools">
+            <button class="btn-header active-view" id="btn-nav-spotlight" style="border-color:var(--accent-amber); color:var(--accent-amber); font-weight:700;" onclick="showView('spotlight')">🎯 1:1 拟真 F12 实景舱 (划到哪解释到哪)</button>
+            <button class="btn-header" id="btn-nav-pipeline" onclick="showView('enlightenment')">🧭 全栈流水线大图</button>
+            <button class="btn-header" id="btn-nav-game" onclick="showView('game')">🚀 五大实战关卡</button>
+            <button class="btn-header" onclick="toggleF12Codex()">📖 F12 武器库全解手册</button>
+            <button class="btn-header" onclick="toggleBlueprint()"><span id="bp-indicator">🟢</span> 📖 实时排错蓝图</button>
+            <button class="btn-header" onclick="toggleReverseLab()">🧰 网站逆向学习室</button>
+            <button class="btn-header" id="sound-btn" onclick="toggleAudio()">🔊 音效: 开</button>
+        </div>
+    </header>
+
+        <!-- 核心第一主视图：F12 1:1 像素级拟真实景透视舱 (划到哪解释到哪) -->
+    <div id="view-spotlight">
+        <div style="background: #0f172a; border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 1.5rem;">🎯</span>
+                <div>
+                    <h2 style="font-size: 1.1rem; color: var(--accent-blue); display: flex; align-items: center; gap: 8px;">
+                        1:1 拟真 F12 开发者驾驶舱 · 视线所及即刻解构
+                        <span style="font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; background: rgba(251,191,36,0.2); color: var(--accent-amber); border: 1px solid rgba(251,191,36,0.4);">双联屏活体互动</span>
+                    </h2>
+                    <div style="font-size: 0.78rem; color: #94a3b8;">
+                        鼠标划过右侧真实 Chrome/Edge F12 的任何按键或代码，左侧网页实体零件瞬间联动发光，下方雷达实时大白话解密！
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button class="btn-header" style="border-color: var(--accent-blue); color: var(--accent-blue); font-weight: 700;" onclick="showView('enlightenment')">
+                    🧭 查看全栈流水线大图 ➔
+                </button>
+                <button class="btn-header" style="background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; border: none; font-weight: 800;" onclick="startPlaythrough()">
+                    🚀 登舱开启五大关卡实战排错 ➔
+                </button>
+            </div>
+        </div>
+
+        <div class="spotlight-cockpit-grid" style="flex: 1;">
+            <!-- 左联屏：真实赛博小店前台视窗 (实体世界) -->
+            <div class="spotlight-webpage-box">
+                <div class="spotlight-web-bar">
+                    <span style="color:#ef4444;">●</span>
+                    <span style="color:#eab308;">●</span>
+                    <span style="color:#22c55e;">●</span>
+                    <span style="margin-left: 8px; color: #cbd5e1;">https://cybershop.local/checkout (肉眼看到的真实网页)</span>
+                </div>
+                <div class="spotlight-web-body">
+                    <div class="mock-cart-card highlighted" id="mock-cart-target">
+                        <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                            <span>🛒 赛博数码小店</span>
+                            <span style="font-size: 0.72rem; color: #94a3b8; background: #0b1120; padding: 2px 6px; border-radius: 4px;">网页实体</span>
+                        </div>
+                        <div class="mock-item-row" id="mock-item-target">
+                            <span>量子微芯片 x 1</span>
+                            <span style="color: var(--accent-blue); font-weight: bold;">¥1,299.00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-top: 12px; padding-top: 8px; border-top: 1px dashed #334155;">
+                            <span>应付总计：</span>
+                            <span style="color: #4ade80;">¥1,299.00</span>
+                        </div>
+                        <button id="mock-btn-target" class="mock-btn-buy target-glow" onclick="alert('✔ 恭喜！你正在操作网页实体世界中的按钮！它在右侧 F12 里的代码是 <button id="checkout-btn">')">💳 立即购买 (点我测试)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右联屏：1:1 像素级拟真 Chrome/Edge F12 驾驶舱 (代码与仪器世界) -->
+            <div class="spotlight-f12-box">
+                <!-- 顶部工具条 (中英双语) -->
+                <div class="f12-top-strip">
+                    <div class="f12-tool-icon f12-hotspot" id="hs-arrow" onmouseenter="focusHotspot('arrow')" onclick="focusHotspot('arrow')" title="检查元素 / 选择指针 (Ctrl+Shift+C)">
+                        <span style="font-size: 1rem; font-weight: bold;">↖</span>
+                    </div>
+                    <div class="f12-tool-icon f12-hotspot" id="hs-device" onmouseenter="focusHotspot('device')" onclick="focusHotspot('device')" title="切换设备仿真 / 手机视口 (Ctrl+Shift+M)">
+                        <span>📱</span>
+                    </div>
+                    <div style="width: 1px; height: 16px; background: #334155; margin: 0 4px;"></div>
+                    <div class="f12-strip-tab active f12-hotspot" id="hs-tab-elements" onmouseenter="focusHotspot('tab-elements')">Elements (元素)</div>
+                    <div class="f12-strip-tab f12-hotspot" id="hs-tab-console" onmouseenter="focusHotspot('tab-console')">Console (控制台)</div>
+                    <div class="f12-strip-tab f12-hotspot" id="hs-tab-network" onmouseenter="focusHotspot('tab-network')">Network (网络)</div>
+                    <div class="f12-strip-tab f12-hotspot" id="hs-tab-storage" onmouseenter="focusHotspot('tab-storage')">Application (应用)</div>
+                    <div class="f12-strip-tab f12-hotspot" id="hs-tab-sources" onmouseenter="focusHotspot('tab-sources')">Sources (源代码)</div>
+                </div>
+
+                <!-- 中部双栏透视：左边 DOM 树，右边 Styles + Computed -->
+                <div class="f12-center-split">
+                    <!-- 左栏 DOM 活体树区 -->
+                    <div class="f12-dom-col">
+                        <div style="color: #64748b; margin-bottom: 6px;">&lt;!-- 网页活体 DOM 树 (内存 RAM) --&gt;</div>
+                        <div>&lt;<span style="color:#f43f5e;">div</span> <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">shop-container</span>"&gt;</div>
+                        
+                        <div style="padding-left: 14px;" class="f12-hotspot" id="hs-dom-card" onmouseenter="focusHotspot('dom-card')" onclick="focusHotspot('dom-card')">
+                            &lt;<span style="color:#f43f5e;">div</span> <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">mock-cart-card</span>"&gt;
+                        </div>
+                        <div style="padding-left: 28px;" class="f12-hotspot" id="hs-dom-item" onmouseenter="focusHotspot('dom-item')" onclick="focusHotspot('dom-item')">
+                            &lt;<span style="color:#f43f5e;">div</span> <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">product-item</span>"&gt;芯片...&lt;/<span style="color:#f43f5e;">div</span>&gt;
+                        </div>
+                        <div style="padding-left: 28px; background: rgba(56, 189, 248, 0.15);" class="f12-hotspot active-focus" id="hs-dom-btn" onmouseenter="focusHotspot('dom-btn')" onclick="focusHotspot('dom-btn')">
+                            &lt;<span style="color:#f43f5e;">button</span> <span style="color:#f59e0b;">id</span>="<span style="color:#38bdf8;">checkout-btn</span>" <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">mock-btn-buy</span>"&gt;💳 立即购买&lt;/<span style="color:#f43f5e;">button</span>&gt;
+                        </div>
+                        <div style="padding-left: 14px;">&lt;/<span style="color:#f43f5e;">div</span>&gt;</div>
+                        <div>&lt;/<span style="color:#f43f5e;">div</span>&gt;</div>
+                    </div>
+
+                    <!-- 右栏 Styles 样式与盒模型调色板区 -->
+                    <div class="f12-styles-col">
+                        <div style="color: #64748b; margin-bottom: 6px;">/* Styles (样式) 试衣间面板 */</div>
+                        
+                        <div class="f12-hotspot" id="hs-styles-rule" onmouseenter="focusHotspot('styles-rule')" onclick="focusHotspot('styles-rule')">
+                            <div style="color: #fef08a;">.mock-btn-buy {</div>
+                            <div style="padding-left: 12px;">
+                                <label style="cursor:pointer; display:flex; align-items:center; gap:4px; color:#4ade80;">
+                                    <input type="checkbox" id="mock-style-cb" checked onchange="toggleMockStyle(this)">
+                                    <span>background: <span style="color:#00ffaa;">#00ffaa</span>;</span>
+                                </label>
+                                <span style="color:#94a3b8; padding-left:18px; display:block;">padding: 10px;</span>
+                                <span style="color:#94a3b8; padding-left:18px; display:block;">font-weight: 800;</span>
+                            </div>
+                            <div style="color: #fef08a;">}</div>
+                        </div>
+
+                        <!-- Computed 四层同心盒模型示意图 -->
+                        <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #23334d;" class="f12-hotspot" id="hs-boxmodel" onmouseenter="focusHotspot('boxmodel')" onclick="focusHotspot('boxmodel')">
+                            <div style="color:#fef08a; margin-bottom: 4px;">Computed (已计算) 盒模型: 同心四层</div>
+                            <div style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; padding:4px; text-align:center; font-size:0.7rem; color:#f59e0b;">
+                                MARGIN (外边距): 10px
+                                <div style="background:rgba(251,191,36,0.15); border:1px solid #fbbf24; margin:3px; padding:3px; color:#fbbf24;">
+                                    BORDER (边框): 0px
+                                    <div style="background:rgba(16,185,129,0.15); border:1px solid #10b981; margin:3px; padding:3px; color:#10b981;">
+                                        PADDING (内边距): 10px
+                                        <div style="background:rgba(56,189,248,0.25); border:1px solid #38bdf8; margin:3px; padding:4px; color:#38bdf8; font-weight:bold;">
+                                            CONTENT (实物内容): 300 × 36
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部 Console 抽屉输入行 -->
+                <div style="background: #090d16; border-top: 1px solid #23334d; padding: 6px 12px; display: flex; align-items: center; gap: 8px;" class="f12-hotspot" id="hs-console-cli" onmouseenter="focusHotspot('console-cli')" onclick="focusHotspot('console-cli')">
+                    <span style="color: var(--accent-blue); font-weight: bold;">&gt;</span>
+                    <span style="color: #94a3b8; font-size: 0.75rem;">Console (控制台) 命令行输入：试试输入 $0.style.background='red' 或 console.log('你好') ...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部动态雷达 HUD：划到哪就解释到哪 -->
+        <div class="spotlight-radar-hud">
+            <div class="radar-zone-info">
+                <span id="radar-badge" class="radar-zone-badge">正在透视：代码与实体身份对应</span>
+                <div id="radar-title" class="radar-zone-title">
+                    <span>🔍 DOM 树中的 &lt;button id="checkout-btn"&gt;</span>
+                </div>
+                <div id="radar-desc" class="radar-zone-desc">
+                    这是左侧绿色【立即购买】按钮在机器内部的“活体身份证”。鼠标只要在右侧选中它，左侧实体立刻被蓝光锁定！
+                </div>
+                <div style="margin-top: 6px; font-size: 0.78rem;">
+                    <span id="radar-super" class="radar-superpower">⚡ 超能力：双击改文字，左侧网页按钮字样立刻随之改变！</span>
+                    <span id="radar-taboo" class="radar-taboo">🚫 边界铁律：按 F5 刷新立刻还原，无法真正修改服务器！</span>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-header" style="background: var(--accent-blue); color: #000; font-weight: bold;" onclick="showView('enlightenment')">🧭 前往流水线拓扑大图</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 阶段零：全栈单向流水线与知识下钻视图 -->
+    <div id="view-enlightenment">
+        <div class="map-banner">
+            <h2>🧭 全栈数据流转全景图 · 单向流水线大图</h2>
+            <p>网站数据本质是一条有始有终的单向流水线。点击下方四大站台，逐步聚焦透视每个环节的零件与 F12 装备，消除记忆负担：</p>
+        </div>
+
+        <!-- 核心拓扑流水线导航条 (带动态流动指示) -->
+        <div class="pipeline-track-container">
+            <div class="pipeline-track">
+                <!-- 站台 1 -->
+                <div class="pipeline-step-node active" id="pipe-node-1" onclick="selectPipelineStage(1)">
+                    <div class="step-circle">1</div>
+                    <div class="step-info">
+                        <div class="step-title">🖥️ 站台一：浏览器前台呈现</div>
+                        <div class="step-sub">HTML 骨架 · CSS 涂装 · JS 神经中枢</div>
+                    </div>
+                </div>
+
+                <!-- 连线 1->2 -->
+                <div class="pipeline-connector">
+                    <span>用户点击/交互</span>
+                    <span class="connector-line">➔➔</span>
+                </div>
+
+                <!-- 站台 2 -->
+                <div class="pipeline-step-node" id="pipe-node-2" onclick="selectPipelineStage(2)">
+                    <div class="step-circle">2</div>
+                    <div class="step-info">
+                        <div class="step-title">🚢 站台二：运输通信航道</div>
+                        <div class="step-sub">Network (网络) · HTTP 报文 · API 接口</div>
+                    </div>
+                </div>
+
+                <!-- 连线 2->3 -->
+                <div class="pipeline-connector">
+                    <span>网络报文抵港</span>
+                    <span class="connector-line">➔➔</span>
+                </div>
+
+                <!-- 站台 3 -->
+                <div class="pipeline-step-node" id="pipe-node-3" onclick="selectPipelineStage(3)">
+                    <div class="step-circle">3</div>
+                    <div class="step-info">
+                        <div class="step-title">🍳 站台三：后台中枢金库</div>
+                        <div class="step-sub">Server (服务端) · 数据库持久账本</div>
+                    </div>
+                </div>
+
+                <!-- 连线 3->4 -->
+                <div class="pipeline-connector">
+                    <span>回传响应凭证</span>
+                    <span class="connector-line">➔➔</span>
+                </div>
+
+                <!-- 站台 4 -->
+                <div class="pipeline-step-node" id="pipe-node-4" onclick="selectPipelineStage(4)">
+                    <div class="step-circle">4</div>
+                    <div class="step-info">
+                        <div class="step-title">💼 站台四：本地沙箱防线</div>
+                        <div class="step-sub">Application (存储) · CORS 同源海关</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 控制条：聚焦模式 vs 全览模式 -->
+            <div class="pipeline-view-controls">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 700; color: var(--accent-amber);">💡 当前视窗：</span>
+                    <span id="pipeline-current-desc" style="color: #cbd5e1;">【站台一：浏览器前台呈现】聚焦查看 3 个前端展示与控制总成</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button class="pill-btn active" id="btn-mode-focus" onclick="setPipelineMode('focus')">🎯 站台聚焦模式 (初学减负)</button>
+                    <button class="pill-btn" id="btn-mode-all" onclick="setPipelineMode('all')">🌲 全网格展开 (全盘通览)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 零件卡片总容器 (在聚焦模式下只展示当前站台的 2~3 个零件) -->
+        <div class="knowledge-tree-container" id="tree-container">
+            <!-- 模块 1: HTML (属于站台 1) -->
+            <div class="tree-branch-card" data-stage="1" data-cat="front">
+                <div class="branch-header" onclick="toggleDossier('dossier-1')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">🧱</span>
+                        <div>
+                            <div class="branch-name">1. 前端展示总成 (HTML 骨架)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台一 · 实体存在性依据 · 内存 DOM 树</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">骨架套娃</span>
+                </div>
+                <div class="branch-summary">像钢筋梁柱与空纸箱，决定页面里“到底有什么”。尖括号标签嵌套在内存中长成 DOM 树。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-1')">
+                        <span>1.1 标签嵌套与 DOM 树内存生成</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-1')">
+                        <span>1.2 语义化零件 (div 容器, button 按钮, input 输入框)</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-1')">
+                        <span>1.3 经典断点：标签漏闭合排版全崩</span>
+                        <span style="color:var(--accent-red);">🚨 典型事故</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-1">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与装配位置</div>
+                        <div class="dossier-text">大楼的建筑毛坯骨架。HTML 决定现场有几扇门、几面墙。没有骨架，后面的涂料（CSS）和机械臂（JS）根本没有着力点。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">面对 AI 生成的几百行 HTML 标签，千万不要被密密麻麻的尖括号吓退。它只有最质朴的<strong>三级套娃</strong>关系：外层 html ➔ head(隐形配置) / body(肉眼可见) ➔ 内部组件盒子。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Elements (元素) 透视镜</b>。<br>
+                            ① 快捷键 <code style="color:var(--accent-amber);">Ctrl+Shift+C</code> 开启<b>【检查元素 / 选择元素】</b>瞄准指针；<br>
+                            ② 鼠标点击页面零件，观察左侧 <b>DOM 树</b> 是否高亮定位到标签；<br>
+                            ③ 如果树上搜不到该节点，说明该零件被条件逻辑剔除或未被正确渲染。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-1')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 2: CSS (属于站台 1) -->
+            <div class="tree-branch-card" data-stage="1" data-cat="front">
+                <div class="branch-header" onclick="toggleDossier('dossier-2')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">🎨</span>
+                        <div>
+                            <div class="branch-name">2. 涂装与空间总成 (CSS 样式)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台一 · 四层同心盒空间法则 · 外观渲染</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">四层盒模型</span>
+                </div>
+                <div class="branch-summary">决定骨架“长得漂不漂亮、摆在什么位置”。每一个零件都被严谨的四层同心盒紧紧包裹。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-2')">
+                        <span>2.1 四层同心盒 (Margin 外边距 ➔ Border 边框 ➔ Padding 内边距 ➔ Content 内容)</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-2')">
+                        <span>2.2 层叠大喇叭与权重优先级法则</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-2')">
+                        <span>2.3 经典断点：display: none 隐身斗篷</span>
+                        <span style="color:var(--accent-red);">🚨 第一关故障</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-2">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与空间法则</div>
+                        <div class="dossier-text">涂装工与包装箱。Margin(邻里间距) ➔ Border(纸箱外壳) ➔ Padding(防震泡沫) ➔ Content(箱内实物)。天生是大喇叭广播覆盖。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">初学者最怕样式被莫名其妙覆盖。记住：CSS 永远是<strong>后来者居上、具体者优先</strong>。被划掉的横线就是被谁覆盖的明确工单。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Elements (元素) ➔ 右侧 Styles (样式) & Computed (已计算)</b>。<br>
+                            ① 选中目标节点，在 <b>Styles (样式)</b> 栏看规则覆盖情况；<br>
+                            ② 被划掉横线的属性代表被更具体的规则顶替；<br>
+                            ③ 在 <b>Computed (已计算)</b> 底部看直观的四层同心盒模型，确认是否被内外边距挤变形。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-2')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 3: JavaScript (属于站台 1) -->
+            <div class="tree-branch-card" data-stage="1" data-cat="logic">
+                <div class="branch-header" onclick="toggleDossier('dossier-3')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">⚡</span>
+                        <div>
+                            <div class="branch-name">3. 前台神经总成 (JavaScript)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台一 · 动作监听 · 机械臂驱动与请求装填</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">神经控制</span>
+                </div>
+                <div class="branch-summary">感知点击输入，执行业务逻辑，指挥 DOM 增删改查，并向第二站台运输网络装填并发射请求报文。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-3')">
+                        <span>3.1 元素选择器与 addEventListener 事件监听绑定</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-3')">
+                        <span>3.2 单线程调用栈与单点报错熔断机制</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-3')">
+                        <span>3.3 经典断点：ID 拼错抓到 null 机械臂瘫痪</span>
+                        <span style="color:var(--accent-red);">🚨 第二关故障</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-3">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与运作机制</div>
+                        <div class="dossier-text">中央大脑与机械臂电缆。电缆一头插在 HTML 按钮上（事件监听），中间穿过逻辑芯片，另一头牵引页面动作或网络发射台。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">最常见的报错就是 <code>Cannot read properties of null</code>。本质不是高深算法错误，而是“大脑试图给空气握手”——选择器找错了对象。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Console (控制台) 听诊器</b>。<br>
+                            ① 遇到按键假死，第一时间切到 <b>Console (控制台)</b> 面板；<br>
+                            ② 查看红色 <b>Error (错误)</b> 告警，勾选 <b>Preserve log (保留日志)</b> 避免刷新丢失；<br>
+                            ③ 点击红字最右侧的 <code style="color:var(--accent-blue);">xxx.js:行号</code>，一秒跳转到 <b>Sources (源代码)</b> 案发现场。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-3')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 4: Network / HTTP (属于站台 2) -->
+            <div class="tree-branch-card" data-stage="2" data-cat="net">
+                <div class="branch-header" onclick="toggleDossier('dossier-4')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">🚢</span>
+                        <div>
+                            <div class="branch-name">4. 海陆货运航道 (Network / HTTP)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台二 · 网络传输网络 · 状态码旗语与集装箱面单</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">快艇信使</span>
+                </div>
+                <div class="branch-summary">穿梭在客户端与远端机房之间的物流网络。标准集装箱分为面单、报关头与箱内实物。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-4')">
+                        <span>4.1 集装箱报文结构 (URL, Headers 标头, Body 实体)</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-4')">
+                        <span>4.2 状态码旗语 (200 成功, 304 缓存, 404 迷路, 500 后厨崩溃)</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-4')">
+                        <span>4.3 经典断点：接口少打字母 404 迷路触礁</span>
+                        <span style="color:var(--accent-red);">🚨 第三关故障</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-4">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与旗语法则</div>
+                        <div class="dossier-text">水上快艇航道。200 OK（货已顺利靠岸）；304（旧货没变复用缓存）；404（找错码头暗礁迷路）；500（后厨失火烧锅）。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">弹窗说“网络异常”，不要以为是网线断了。90% 的网络错误只是前台把 URL 地址或者 HTTP Method（GET/POST）写差了一个字母。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Network (网络) 抓包雷达</b>。<br>
+                            ① 勾选 <b>Disable cache (停用缓存)</b>，过滤器点击 <b>Fetch/XHR (提取/XHR)</b>；<br>
+                            ② 触发页面动作，看雷达列表里弹出的请求；<br>
+                            ③ 点开该请求看 <b>Headers (请求标头)</b> 中的 Request URL 是否拼错，以及状态码是否变红。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-4')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 5: API & JSON (属于站台 2) -->
+            <div class="tree-branch-card" data-stage="2" data-cat="net">
+                <div class="branch-header" onclick="toggleDossier('dossier-5')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">📋</span>
+                        <div>
+                            <div class="branch-name">5. 标准接口总成 (API 窗口 & JSON)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台二 · 接口合约规范 · 通用键值对数据单据</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">传菜窗口</span>
+                </div>
+                <div class="branch-summary">后厨传菜的标准交接窗口与跨语言双方都能一眼读懂的小纸条，确保数据零障碍对齐。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-5')">
+                        <span>5.1 RESTful 路由合约与传菜窗口规范</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-5')">
+                        <span>5.2 JSON 序列化与键值对解析</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-5')">
+                        <span>5.3 经典断点：字段不符读出 undefined 变 NaN</span>
+                        <span style="color:var(--accent-red);">🚨 第四关故障</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-5">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与接口法则</div>
+                        <div class="dossier-text">后厨与前厅的传菜口。不管后厨用 Python 还是 Java，送出来的都必须是一张规范的 JSON 小纸条 <code>{"total_price": 99}</code>。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">金额显示 ¥NaN，初学者常常以为是计算机硬件算错了。其实是前端读了不存在的字段名（如 <code>res.price</code> 取出 <code>undefined</code>），和数字相加自然成了 Not a Number (NaN)。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Network (网络) ➔ Response (响应) / Payload (载荷)</b>。<br>
+                            ① 在 Network 列表点击该接口；<br>
+                            ② 切换到 <b>Response (响应)</b> 查看后端返回的真实 JSON 原文；<br>
+                            ③ 核对键名，将前端代码的取值路径（如 <code style="color:var(--accent-green);">res.total_price</code>）与真实键名对齐。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-5')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 6: 后端 Server (属于站台 3) -->
+            <div class="tree-branch-card" data-stage="3" data-cat="back">
+                <div class="branch-header" onclick="toggleDossier('dossier-6')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">🍳</span>
+                        <div>
+                            <div class="branch-name">6. 幕后调度总成 (后端 Server)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台三 · 机房封闭中枢 · 鉴权门禁与业务真理中心</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">封闭后厨</span>
+                </div>
+                <div class="branch-summary">把控安全门禁，核验身份签名，执行真实的扣款扣库存逻辑，防止前台代码被恶意篡改。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-6')">
+                        <span>6.1 JWT 令牌校验与安全门禁防线</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-6')">
+                        <span>6.2 商业业务逻辑计算流水线</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-6')">
+                        <span>6.3 经典断点：后端异常抛出 500 熔断</span>
+                        <span style="color:var(--accent-red);">🚨 后厨事故</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-6">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与运作机制</div>
+                        <div class="dossier-text">严密封闭的后厨。前台可以随便看随便改，但真金白银的扣款、发货，必须由后厨严格把关并核验公章（Token）。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">看到 500 Internal Server Error，特工只需明白：前台请求已经完好送到了，是后厨代码在执行时发生了未捕获的崩溃，排查重点转向服务器日志。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Network (网络) ➔ Preview (预览) & Response (响应)</b>。<br>
+                            ① 检查状态码是否为红字 500；<br>
+                            ② 切换到 <b>Preview (预览)</b> 查看后端返回的错误栈 (Stack Trace)；<br>
+                            ③ 根据报错提示定位后端文件与控制器路由。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-6')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 7: 数据库 Database (属于站台 3) -->
+            <div class="tree-branch-card" data-stage="3" data-cat="back">
+                <div class="branch-header" onclick="toggleDossier('dossier-7')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">🗄️</span>
+                        <div>
+                            <div class="branch-name">7. 帝国档案总成 (数据库 Database)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台三 · 持久化存储 · 磁盘扇区与 B+Tree 索引</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">帝国保险柜</span>
+                </div>
+                <div class="branch-summary">将账单、用户账户持久化落盘在物理介质中，断电绝不丢失，通过 B+Tree 索引实现毫秒级快速检索。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-7')">
+                        <span>7.1 内存易失 vs 磁盘持久落盘机制</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-7')">
+                        <span>7.2 B+Tree 索引多层快速收敛寻道</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-7')">
+                        <span>7.3 经典断点：缺少索引全表扫描导致超时</span>
+                        <span style="color:var(--accent-red);">🚨 性能事故</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-7">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与运作机制</div>
+                        <div class="dossier-text">帝国的地下防火金库。服务器重启千百次，金库里的账本依然完好无损。索引就像字典前几页的拼音音序表，避开一页页翻书。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">数据库没有任何玄学，它就是组织得极度严密的文件与指针表。排查核心在于：连接池满没满、SQL 执行耗时多长。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Network (网络) ➔ Timing (耗时) 分析</b>。<br>
+                            ① 在请求详情点击 <b>Timing (耗时)</b> 选项卡；<br>
+                            ② 观察 <b>Waiting for server response (TTFB / 等待响应)</b> 耗时；<br>
+                            ③ 如果耗时数秒以上，通常说明后厨卡在慢 SQL 查询或全表扫描中。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-7')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+
+            <!-- 模块 8: Storage & 运行环境 (属于站台 4) -->
+            <div class="tree-branch-card" data-stage="4" data-cat="storage">
+                <div class="branch-header" onclick="toggleDossier('dossier-8')">
+                    <div class="branch-title-group">
+                        <span class="branch-icon">💼</span>
+                        <div>
+                            <div class="branch-name">8. 本地抽屉与安全铁壁 (Storage & CORS)</div>
+                            <div style="font-size: 0.72rem; color: #64748b;">站台四 · 浏览器沙箱 · 登录态凭证与海关放行防线</div>
+                        </div>
+                    </div>
+                    <span class="branch-badge">本地抽屉与海关</span>
+                </div>
+                <div class="branch-summary">浏览器本地储存盒，保管 Token 凭证；同源策略与 CORS 规则如同严密海关，阻绝未授权跨域渗透。</div>
+                <div class="micro-nodes-list">
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-8')">
+                        <span>8.1 LocalStorage 永久存 vs SessionStorage 临时易失</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-8')">
+                        <span>8.2 同源策略铁壁与 CORS 海关放行公函</span>
+                        <span style="color:var(--accent-blue);">展开档案 ➔</span>
+                    </div>
+                    <div class="micro-node-item" onclick="toggleDossier('dossier-8')">
+                        <span>8.3 经典断点：刷新失忆症 & 终极 Boss 跨域拦截</span>
+                        <span style="color:var(--accent-red);">🚨 第四/五关故障</span>
+                    </div>
+                </div>
+                <div class="dossier-expand-box" id="dossier-8">
+                    <div class="dossier-section">
+                        <div class="dossier-label">🏗️ 物理隐喻与运作机制</div>
+                        <div class="dossier-text">随身抽屉与海关关卡。LocalStorage 是耐火保险盒，关机不丢；SessionStorage 是写在便利贴上的草稿，标签页一关就撕毁；CORS 是海关出具的货物通关公函。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛡️ AI 时代的祛魅心法</div>
+                        <div class="dossier-text">看到 CORS 报错，千万不要怕。真正举起大刀拦截货物的，<strong>正是当前这台浏览器自身</strong>！因为浏览器非常忠实地执行同源安全法，除非后端声明 <code>Access-Control-Allow-Origin</code>。</div>
+                    </div>
+                    <div class="dossier-section">
+                        <div class="dossier-label">🛠️ 对应 F12 装备与三步勘验【中文环境对照】</div>
+                        <div class="dossier-text">
+                            装备：<b>Application (应用/存储) ➔ Local Storage & Console (控制台)</b>。<br>
+                            ① 展开 <b>Application (应用) ➔ 本地存储 (Local Storage)</b>，核对 Key-Value 是否有 Token；<br>
+                            ② 遇到跨域红字，查看 <b>Network (网络) ➔ Response Headers (响应标头)</b> 是否缺少 Access-Control；<br>
+                            ③ 必要时点击 <b>Clear site data (清除网站数据)</b> 模拟纯净的新访客环境。
+                        </div>
+                    </div>
+                    <button class="btn-collapse" onclick="toggleDossier('dossier-8')">🔙 收起档案回到流水线</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="start-bar">
+            <button class="btn-start-game" onclick="startPlaythrough()">🚀 流水线已心中有数！登舱开启五大关卡实战排错 ➔</button>
+        </div>
+    </div>
+    <!-- 阶段一：实战闯关演习视图 -->
+    <div id="view-game" style="display: none;">
+        <div id="workspace">
+            <div class="window-box">
+                <div class="window-header">
+                    <div class="traffic-lights">
+                        <div class="dot dot-red"></div>
+                        <div class="dot dot-yellow"></div>
+                        <div class="dot dot-green"></div>
+                    </div>
+                    <div class="url-bar">https://cybershop.local/cart</div>
+                </div>
+                <div id="shop-viewport"></div>
+            </div>
+
+            <div class="window-box" id="devtools">
+                <div class="devtools-tabs">
+                    <div id="tab-elements" class="dev-tab locked" onclick="switchTab('elements')">🔍 Elements (元素)</div>
+                    <div id="tab-console" class="dev-tab locked" onclick="switchTab('console')">🩺 Console (控制台)</div>
+                    <div id="tab-network" class="dev-tab locked" onclick="switchTab('network')">📡 Network (网络)</div>
+                    <div id="tab-storage" class="dev-tab locked" onclick="switchTab('storage')">🗃️ Application (应用/存储)</div>
+                </div>
+                <div id="dev-content" class="dev-content">
+                    <div style="color: #64748b; padding: 30px; text-align: center;">⚡ 请先在下方特工指挥台做出决策！</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="command-center">
+            <div class="mission-header">
+                <div id="mission-title" class="mission-title">🎯 任务加载中...</div>
+                <div id="mission-feedback" class="mission-feedback" style="color: #94a3b8;">等待决策指令</div>
+            </div>
+            <div id="question-box" class="question-box">决策问题</div>
+            <div id="options-box" class="options-grid"></div>
+        </div>
+    </div>
+
+    <!-- 弹窗：关卡胜利复盘战报 -->
+    <div id="modal-debrief" class="modal-overlay">
+        <div class="modal-content" style="max-width: 580px;">
+            <div class="modal-header">
+                <h3 style="color: var(--accent-green);">🎉 关卡排除成功！战术复盘战报</h3>
+            </div>
+            <div class="modal-body" id="debrief-body"></div>
+        </div>
+    </div>
+
+    <!-- 弹窗：实时蓝图 -->
+    <div id="modal-blueprint" class="modal-overlay" onclick="closeModals(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 style="color: var(--accent-blue);">📖 全栈系统装配总蓝图 (动态故障雷达)</h3>
+                <button class="close-btn" onclick="toggleBlueprint()">&times;</button>
+            </div>
+            <div class="modal-body" id="blueprint-list"></div>
+        </div>
+    </div>
+
+    <!-- 弹窗：逆向学习室 -->
+    <div id="modal-reverselab" class="modal-overlay" onclick="closeModals(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h3 style="color: var(--accent-green);">🧰 外部网站逆向学习与本地魔改手册</h3>
+                <button class="close-btn" onclick="toggleReverseLab()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 style="color:#fef08a; margin-bottom: 6px;">方法一：浏览器原生“完整另存法”（适合静态单页/新手起步）</h4>
+                <p>1. 在目标网页按 <code>Ctrl + S</code>（Mac: <code>Cmd + S</code>）；<br>
+                2. 保存类型必须选择 <b>“网页，完整 (*.htm, *.html)”</b>；<br>
+                3. 用 VS Code 打开生成的 <code>.html</code>，直接修改文字与样式，在本地浏览器刷新即时看到魔改效果！</p>
+                <h4 style="color:#fef08a; margin: 14px 0 6px;">方法二：利用 F12 Sources 还原未混淆工程（Source Map）</h4>
+                <p>打开 F12 ➔ 切换到 <b>Sources</b> 面板 ➔ 寻找 <code>webpack://</code>、<code>vite://</code> 或 <code>src/</code> 目录，能直接阅读作者带注释的原厂 Vue/React 源码！</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 弹窗：F12 开发者武器库全景解构与能力边界馆 -->
+
+    <!-- 弹窗：F12 拟真实景透视舱 (划到哪解释到哪) -->
+    <div id="modal-f12-spotlight" class="modal-overlay" onclick="closeModals(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header" style="background: #111827; border-bottom: 1px solid #1e2d45;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">🎯</span>
+                    <div>
+                        <h3 style="color: var(--accent-blue); font-size: 1.05rem;">F12 拟真实景驾驶舱 · 视线所及即刻解构</h3>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">鼠标滑过右侧真实 F12 的任何部件，左侧实体瞬间联动，下方雷达实时大白话解密！</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="toggleF12Spotlight()">&times;</button>
+            </div>
+
+            <div class="spotlight-cockpit-grid">
+                <!-- 左联屏：真实赛博小店前台视窗 (实体世界) -->
+                <div class="spotlight-webpage-box">
+                    <div class="spotlight-web-bar">
+                        <span style="color:#ef4444;">●</span>
+                        <span style="color:#eab308;">●</span>
+                        <span style="color:#22c55e;">●</span>
+                        <span style="margin-left: 8px;">https://cybershop.local/checkout (肉眼看到的网页实体)</span>
+                    </div>
+                    <div class="spotlight-web-body">
+                        <div class="mock-cart-card" id="mock-cart-target">
+                            <div style="font-weight: bold; font-size: 0.95rem; margin-bottom: 8px;">🛒 赛博数码小店</div>
+                            <div class="mock-item-row" id="mock-item-target">
+                                <span>量子微芯片 x 1</span>
+                                <span style="color: var(--accent-blue);">¥1,299.00</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; margin-top: 10px;">
+                                <span>应付总计：</span>
+                                <span style="color: #4ade80;">¥1,299.00</span>
+                            </div>
+                            <button id="mock-btn-target" class="mock-btn-buy" onclick="alert('✔ 恭喜！你正在操作网页实体世界中的按钮！')">💳 立即购买 (点我测试)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 右联屏：1:1 像素级拟真 Chrome/Edge F12 驾驶舱 (代码与仪器世界) -->
+                <div class="spotlight-f12-box">
+                    <!-- 顶部工具条 -->
+                    <div class="f12-top-strip">
+                        <div class="f12-tool-icon f12-hotspot" id="hs-arrow" onmouseenter="focusHotspot('arrow')" onclick="focusHotspot('arrow')">
+                            <span style="font-size: 1rem;">↖</span>
+                        </div>
+                        <div class="f12-tool-icon f12-hotspot" id="hs-device" onmouseenter="focusHotspot('device')" onclick="focusHotspot('device')">
+                            <span>📱</span>
+                        </div>
+                        <div style="width: 1px; height: 16px; background: #334155; margin: 0 4px;"></div>
+                        <div class="f12-strip-tab active f12-hotspot" id="hs-tab-elements" onmouseenter="focusHotspot('tab-elements')">Elements (元素)</div>
+                        <div class="f12-strip-tab f12-hotspot" id="hs-tab-console" onmouseenter="focusHotspot('tab-console')">Console (控制台)</div>
+                        <div class="f12-strip-tab f12-hotspot" id="hs-tab-network" onmouseenter="focusHotspot('tab-network')">Network (网络)</div>
+                        <div class="f12-strip-tab f12-hotspot" id="hs-tab-storage" onmouseenter="focusHotspot('tab-storage')">Application (应用)</div>
+                        <div class="f12-strip-tab f12-hotspot" id="hs-tab-sources" onmouseenter="focusHotspot('tab-sources')">Sources (源代码)</div>
+                    </div>
+
+                    <!-- 中部双栏透视 -->
+                    <div class="f12-center-split">
+                        <!-- DOM 树区 -->
+                        <div class="f12-dom-col">
+                            <div style="color: #64748b; margin-bottom: 6px;">&lt;!-- 网页骨骼 DOM 活体树 --&gt;</div>
+                            <div>&lt;<span style="color:#f43f5e;">div</span> <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">shop-container</span>"&gt;</div>
+
+                            <div style="padding-left: 14px;" class="f12-hotspot" id="hs-dom-card" onmouseenter="focusHotspot('dom-card')" onclick="focusHotspot('dom-card')">
+                                &lt;<span style="color:#f43f5e;">div</span> <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">mock-cart-card</span>"&gt;
+                            </div>
+
+                            <div style="padding-left: 28px;" class="f12-hotspot" id="hs-dom-item" onmouseenter="focusHotspot('dom-item')" onclick="focusHotspot('dom-item')">
+                                &lt;<span style="color:#f43f5e;">div</span> <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">product-item</span>"&gt;芯片...&lt;/<span style="color:#f43f5e;">div</span>&gt;
+                            </div>
+
+                            <div style="padding-left: 28px; background: rgba(56, 189, 248, 0.15);" class="f12-hotspot active-focus" id="hs-dom-btn" onmouseenter="focusHotspot('dom-btn')" onclick="focusHotspot('dom-btn')">
+                                &lt;<span style="color:#f43f5e;">button</span> <span style="color:#f59e0b;">id</span>="<span style="color:#38bdf8;">checkout-btn</span>" <span style="color:#f59e0b;">class</span>="<span style="color:#00ffaa;">mock-btn-buy</span>"&gt;💳 立即购买&lt;/<span style="color:#f43f5e;">button</span>&gt;
+                            </div>
+
+                            <div style="padding-left: 14px;">&lt;/<span style="color:#f43f5e;">div</span>&gt;</div>
+                            <div>&lt;/<span style="color:#f43f5e;">div</span>&gt;</div>
+                        </div>
+
+                        <!-- Styles 样式调色板区 -->
+                        <div class="f12-styles-col">
+                            <div style="color: #64748b; margin-bottom: 6px;">/* Styles 试衣间面板 */</div>
+
+                            <div class="f12-hotspot" id="hs-styles-rule" onmouseenter="focusHotspot('styles-rule')" onclick="focusHotspot('styles-rule')">
+                                <div style="color: #fef08a;">.mock-btn-buy {</div>
+                                <div style="padding-left: 12px;">
+                                    <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+                                        <input type="checkbox" id="mock-style-cb" checked onchange="toggleMockStyle(this)">
+                                        <span>background: <span style="color:#00ffaa;">#00ffaa</span>;</span>
+                                    </label>
+                                    <span style="color:#94a3b8; padding-left:18px; display:block;">padding: 10px;</span>
+                                    <span style="color:#94a3b8; padding-left:18px; display:block;">font-weight: 800;</span>
+                                </div>
+                                <div style="color: #fef08a;">}</div>
+                            </div>
+
+                            <!-- 同心盒模型示意图 -->
+                            <div style="margin-top: 14px; padding-top: 10px; border-top: 1px dashed #23334d;" class="f12-hotspot" id="hs-boxmodel" onmouseenter="focusHotspot('boxmodel')" onclick="focusHotspot('boxmodel')">
+                                <div style="color:#fef08a; margin-bottom: 4px;">Computed 盒模型 (同心四层)</div>
+                                <div style="background:rgba(245,158,11,0.15); border:1px solid #f59e0b; padding:4px; text-align:center; font-size:0.7rem; color:#f59e0b;">
+                                    MARGIN: 10px
+                                    <div style="background:rgba(251,191,36,0.15); border:1px solid #fbbf24; margin:3px; padding:3px; color:#fbbf24;">
+                                        BORDER: 0px
+                                        <div style="background:rgba(16,185,129,0.15); border:1px solid #10b981; margin:3px; padding:3px; color:#10b981;">
+                                            PADDING: 10px
+                                            <div style="background:rgba(56,189,248,0.25); border:1px solid #38bdf8; margin:3px; padding:4px; color:#38bdf8; font-weight:bold;">
+                                                CONTENT: 300 × 36
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 底部 Console 抽屉输入行 -->
+                    <div style="background: #090d16; border-top: 1px solid #23334d; padding: 6px 12px; display: flex; align-items: center; gap: 8px;" class="f12-hotspot" id="hs-console-cli" onmouseenter="focusHotspot('console-cli')" onclick="focusHotspot('console-cli')">
+                        <span style="color: var(--accent-blue); font-weight: bold;">&gt;</span>
+                        <span style="color: #94a3b8; font-size: 0.75rem;">输入 JS 指令（如 $0.style.background='red' 或 console.log('你好')）...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部动态雷达 HUD：划到哪就解释到哪 -->
+            <div class="spotlight-radar-hud">
+                <div class="radar-zone-info">
+                    <span id="radar-badge" class="radar-zone-badge">正在透视：代码与实体身份对应</span>
+                    <div id="radar-title" class="radar-zone-title">
+                        <span>🔍 DOM 树中的 &lt;button id="checkout-btn"&gt;</span>
+                    </div>
+                    <div id="radar-desc" class="radar-zone-desc">
+                        这是左侧绿色【立即购买】按钮在机器内部的“活体身份证”。鼠标只要在右侧选中它，左侧实体立刻被蓝光锁定！
+                    </div>
+                    <div style="margin-top: 6px; font-size: 0.78rem;">
+                        <span id="radar-super" class="radar-superpower">⚡ 超能力：双击改文字，左侧网页按钮字样立刻随之改变！</span>
+                        <span id="radar-taboo" class="radar-taboo">🚫 边界铁律：按 F5 刷新立刻还原，无法真正修改服务器！</span>
+                    </div>
+                </div>
+
+                <button class="btn-collapse" style="margin: 0; background: var(--accent-blue); color: #000; font-weight: bold;" onclick="toggleF12Spotlight()">🔙 关闭并返回任务现场</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-f12-codex" class="modal-overlay" onclick="closeModals(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.3rem;">🛠️</span>
+                    <div>
+                        <h3 style="color: var(--accent-amber); font-size: 1.05rem;">F12 开发者武器库 · 全景解构与能力边界大全</h3>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">洞悉每件仪器的解剖构造、超能力清单与绝对禁区</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="toggleF12Codex()">&times;</button>
+            </div>
+
+            <!-- Tab 导航 -->
+            <div class="codex-nav-tabs">
+                <button class="codex-tab-btn active" onclick="switchCodexTab('cdx-elements', this)">🔍 Elements (元素) 结构透视镜</button>
+                <button class="codex-tab-btn" onclick="switchCodexTab('cdx-console', this)">🩺 Console (控制台) 听诊器</button>
+                <button class="codex-tab-btn" onclick="switchCodexTab('cdx-network', this)">📡 Network (网络) 货运雷达站</button>
+                <button class="codex-tab-btn" onclick="switchCodexTab('cdx-storage', this)">🗄️ Application (应用/存储) 随身抽屉</button>
+                <button class="codex-tab-btn" onclick="switchCodexTab('cdx-sources', this)">🔬 Sources (源代码) 源码手术台</button>
+            </div>
+
+            <!-- 内容面板 -->
+            <div class="modal-body" style="padding: 16px 20px;">
+
+                <!-- 1. Elements -->
+                <div class="codex-pane active" id="cdx-elements">
+                    <div class="codex-card">
+                        <div class="codex-card-title">💡 它到底是什么？（解剖结构与本质）</div>
+                        <div style="color:#cbd5e1; font-size:0.83rem; line-height:1.6;">
+                            <b>本质：</b>它是浏览器把 HTML 骨架和 CSS 样式解析后，<b>当前此刻存放在内存 RAM 里的“活体 DOM 树”</b>。<br>
+                            <b>解剖结构：</b><br>
+                            • <b>左侧主视窗：</b>可折叠展开的实时 HTML 标签树，带节点高亮与路径导航；<br>
+                            • <b>右侧 Styles 栏：</b>从上到下按权重排列的层叠样式规则，带勾选框；<br>
+                            • <b>右侧 Computed 栏：</b>浏览器最终执行完所有计算后的精准像素尺寸，底部配有同心四层盒模型示意图。
+                        </div>
+                    </div>
+
+                    <div class="codex-grid-2">
+                        <div class="codex-card" style="border-color: rgba(74, 222, 128, 0.3);">
+                            <div class="codex-card-title can-do">⚡ 它能做什么？（特工超能力清单）</div>
+                            <ul class="codex-item-list can">
+                                <li><b>双击实时修改任何文本与标签：</b>现场改字、换类名，回车立刻在屏幕上看到视觉反馈；</li>
+                                <li><b>实时开关/注入 CSS 样式：</b>点击勾选框切换 display、color，或现场写新样式测试排版；</li>
+                                <li><b>强制激活交互伪类：</b>点击 <code>:hov</code> 强制锁定 <code>:hover</code>、<code>:active</code> 状态，从容调试悬停样式；</li>
+                                <li><b>盒模型尺寸即时调节：</b>直接双击盒模型图中的 Margin/Padding 数值进行微调；</li>
+                                <li><b>拖拽重排与临时剔除：</b>直接按 <code>Delete</code> 键删除遮挡屏幕的恶心弹窗或遮罩层。</li>
+                            </ul>
+                        </div>
+
+                        <div class="codex-card" style="border-color: rgba(248, 113, 113, 0.3);">
+                            <div class="codex-card-title cant-do">🚫 绝对不可以做什么？（新手最大认知误区）</div>
+                            <ul class="codex-item-list cant">
+                                <li><b>❌ 绝对不能永久修改服务器上的代码：</b>你在这里改的所有字和样式，<b>只存在于当前这台电脑的临时内存中</b>！按一下 F5 刷新立刻还原；</li>
+                                <li><b>❌ 不能绕过服务端的真实业务鉴权：</b>把按钮的 disabled 强行删掉，只要后厨有安全校验，点击依然无法真正扣款发货；</li>
+                                <li><b>❌ 无法直接点选 Canvas 内部绘制的具体图形：</b>Canvas 是一整张扁平像素画板，Elements 只能看到外层标签，抓不到画笔画出来的具体形状。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="codex-card">
+                        <div class="codex-card-title tips">🎯 老鸟特工秘籍 (Pro Tips)</div>
+                        <div style="font-size:0.8rem; color:#fef08a;">
+                            快捷键 <code>Ctrl + Shift + C</code>（Mac: <code>Cmd + Shift + C</code>）开启“元素瞄准镜”，鼠标在网页上悬停即时透视对应盒模型，点击直接在树上高亮定位，找按钮找盒子只需 1 秒！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Console -->
+                <div class="codex-pane" id="cdx-console">
+                    <div class="codex-card">
+                        <div class="codex-card-title">💡 它到底是什么？（解剖结构与本质）</div>
+                        <div style="color:#cbd5e1; font-size:0.83rem; line-height:1.6;">
+                            <b>本质：</b>它是前端 JavaScript 运行时的<b>“实时听诊器与 REPL 交互命令行终端”</b>。<br>
+                            <b>解剖结构：</b><br>
+                            • <b>消息日志流：</b>白色普通日志 (log)、黄色告警 (warn)、刺眼红字报错 (error)；<br>
+                            • <b>过滤工具条：</b>支持按报错级别过滤，勾选 <code>Preserve log</code> 跨页面跳转不丢日志；<br>
+                            • <b>命令行输入框：</b>底部的 <code>&gt;</code> 提示符，直接接入当前网页的 JS 运行时主线程。
+                        </div>
+                    </div>
+
+                    <div class="codex-grid-2">
+                        <div class="codex-card" style="border-color: rgba(74, 222, 128, 0.3);">
+                            <div class="codex-card-title can-do">⚡ 它能做什么？（特工超能力清单）</div>
+                            <ul class="codex-item-list can">
+                                <li><b>直接执行任意 JS 代码：</b>在命令行输入任意表达式或函数调用，立刻在当前页面生效；</li>
+                                <li><b>神级变量 <code>$0</code> 隔空取物：</b>代表你在 Elements 里选中的当前元素，输入 <code>$0.click()</code> 直接代码触发点击；</li>
+                                <li><b>结构化输出利器 <code>console.table()</code>：</b>把杂乱的 JSON 数组一秒转成漂亮的网格表格呈现；</li>
+                                <li><b>一键拷贝内存对象 <code>copy()</code>：</b>在控制台输入 <code>copy(data)</code>，直接将内存对象完整塞入系统剪贴板；</li>
+                                <li><b>精准顺藤摸瓜：</b>点击任何红字右侧的 <code>文件名.js:行号</code>，一秒瞬移到案发源码位置。</li>
+                            </ul>
+                        </div>
+
+                        <div class="codex-card" style="border-color: rgba(248, 113, 113, 0.3);">
+                            <div class="codex-card-title cant-do">🚫 绝对不可以做什么？（新手最大认知误区）</div>
+                            <ul class="codex-item-list cant">
+                                <li><b>❌ 无法撤销已经产生的执行副作用：</b>执行了删除或覆盖变量的操作，无法像按 Ctrl+Z 一样回退；</li>
+                                <li><b>❌ 无法直接访问封闭作用域内的局部变量：</b>被函数闭包封装在内部的变量，除非在代码行打上断点暂停，否则外界控制台隔空摸不到；</li>
+                                <li><b>❌ 报错不会惩罚你：</b>红字是机器在向你极其严肃严谨地递交报修工单，看清楚报错名称（TypeError、SyntaxError）是解决问题的起点。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="codex-card">
+                        <div class="codex-card-title tips">🎯 老鸟特工秘籍 (Pro Tips)</div>
+                        <div style="font-size:0.8rem; color:#fef08a;">
+                            遇到页面假死、按键毫无反应，第一反应永远是看 Console 右上角有没有红色圆形报错图标。红字给出的永远是第一案发现场！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Network -->
+                <div class="codex-pane" id="cdx-network">
+                    <div class="codex-card">
+                        <div class="codex-card-title">💡 它到底是什么？（解剖结构与本质）</div>
+                        <div style="color:#cbd5e1; font-size:0.83rem; line-height:1.6;">
+                            <b>本质：</b>它是浏览器与外部服务器进行通信的<b>“水上货运雷达与海关集装箱清单记录仪”</b>。<br>
+                            <b>解剖结构：</b><br>
+                            • <b>捕获控制条：</b>红点录制开关、清空列表 🚫、<code>Disable cache</code> 禁用缓存、网络节流下拉框；<br>
+                            • <b>类型过滤栏：</b>All、Fetch/XHR（专看异步接口）、JS、CSS、Img 等分类标签；<br>
+                            • <b>集装箱报文大抽屉：</b>Headers（面单与报关头）、Payload（送过去的参数）、Response（返回的真实原文）、Timing（耗时瀑布图）。
+                        </div>
+                    </div>
+
+                    <div class="codex-grid-2">
+                        <div class="codex-card" style="border-color: rgba(74, 222, 128, 0.3);">
+                            <div class="codex-card-title can-do">⚡ 它能做什么？（特工超能力清单）</div>
+                            <ul class="codex-item-list can">
+                                <li><b>核对每一张通信单据：</b>检查请求 URL 有没有拼错，查看后端送回来的真实 JSON 键值对原文；</li>
+                                <li><b>模拟极端恶劣弱网：</b>在节流栏选择 <code>Slow 3G</code> 或 <code>Offline</code>，测试弱网环境下页面交互；</li>
+                                <li><b>耗时病根拆解 (Timing)：</b>看耗时到底是排队延迟、DNS 寻址，还是后端后厨处理耗时太长（TTFB）；</li>
+                                <li><b>一键导出与重放：</b>右键任意请求 ➔ Copy ➔ <code>Copy as cURL</code> 或 <code>fetch</code>，直接在命令行复现问题。</li>
+                            </ul>
+                        </div>
+
+                        <div class="codex-card" style="border-color: rgba(248, 113, 113, 0.3);">
+                            <div class="codex-card-title cant-do">🚫 绝对不可以做什么？（新手最大认知误区）</div>
+                            <ul class="codex-item-list cant">
+                                <li><b>❌ 抓不到打开 F12 之前的历史请求：</b>F12 没打开时发生的通信默认是不记录的；刷新前若没勾选 Preserve log，跳转后列表会被清空；</li>
+                                <li><b>❌ 200 OK 绝不等于业务成功：</b>200 仅代表货船顺利靠岸，至于箱子里装的是成功货单还是“密码错误”的单据，必须看 Response 原文；</li>
+                                <li><b>❌ 默认状态下无法在半路篡改传输数据：</b>它是只读雷达，无法在快艇航行途中强行替换数据包（除非使用 Local Overrides 覆盖）。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="codex-card">
+                        <div class="codex-card-title tips">🎯 老鸟特工秘籍 (Pro Tips)</div>
+                        <div style="font-size:0.8rem; color:#fef08a;">
+                            调试数据接口时，第一时间点击顶部 <code>Fetch/XHR</code> 按钮，过滤掉杂乱的图片和字体请求，整个雷达站立刻只剩下核心的业务数据流！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Application / Storage -->
+                <div class="codex-pane" id="cdx-storage">
+                    <div class="codex-card">
+                        <div class="codex-card-title">💡 它到底是什么？（解剖结构与本质）</div>
+                        <div style="color:#cbd5e1; font-size:0.83rem; line-height:1.6;">
+                            <b>本质：</b>它是浏览器专门为当前域名分配的<b>“客户端本地储物私房箱”</b>。<br>
+                            <b>解剖结构：</b><br>
+                            • <b>LocalStorage：</b>持久化硬盘抽屉，容量约 5MB，关掉浏览器依然永久保留；<br>
+                            • <b>SessionStorage：</b>单标签页临时内存抽屉，标签页一关即刻自动销毁；<br>
+                            • <b>Cookies：</b>随信小纸条，每次发 HTTP 请求都会自动带上，带过期时间与安全防线；<br>
+                            • <b>Storage 顶级菜单：</b>配有一键清空全部缓存的 <code>Clear site data</code> 按钮。
+                        </div>
+                    </div>
+
+                    <div class="codex-grid-2">
+                        <div class="codex-card" style="border-color: rgba(74, 222, 128, 0.3);">
+                            <div class="codex-card-title can-do">⚡ 它能做什么？（特工超能力清单）</div>
+                            <ul class="codex-item-list can">
+                                <li><b>直接查看与修改本地键值对：</b>双击 Value 直接改值，或者手动添加测试数据；</li>
+                                <li><b>一键重置为纯净新访客状态：</b>点击 <code>Clear site data</code>，瞬间抹去一切本地 Cookie 与缓存；</li>
+                                <li><b>核验 Cookie 安全防线：</b>查看 Cookie 是否带有 <code>HttpOnly</code>、<code>Secure</code> 或 <code>SameSite</code> 属性。</li>
+                            </ul>
+                        </div>
+
+                        <div class="codex-card" style="border-color: rgba(248, 113, 113, 0.3);">
+                            <div class="codex-card-title cant-do">🚫 绝对不可以做什么？（新手最大认知误区）</div>
+                            <ul class="codex-item-list cant">
+                                <li><b>❌ 前端 JS 绝对无法偷看带 <code>HttpOnly</code> 标记的 Cookie：</b>这是浏览器防范 XSS 窃取登录态的最强防线；</li>
+                                <li><b>❌ LocalStorage 不能存放海量超大文件：</b>容量上限通常只有 5MB，强行塞大会触发 <code>QuotaExceededError</code>；</li>
+                                <li><b>❌ SessionStorage 无法跨标签页共享：</b>即便在同一个浏览器打开相同网站的两个 Tab，它们的 SessionStorage 也是完全独立的。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="codex-card">
+                        <div class="codex-card-title tips">🎯 老鸟特工秘籍 (Pro Tips)</div>
+                        <div style="font-size:0.8rem; color:#fef08a;">
+                            排查“刷新后登录态失效”或“购物车莫名清空”时，打开 Application 的 Local Storage，看看登录返回的 Token 到底有没有被代码写进抽屉里！
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Sources -->
+                <div class="codex-pane" id="cdx-sources">
+                    <div class="codex-card">
+                        <div class="codex-card-title">💡 它到底是什么？（解剖结构与本质）</div>
+                        <div style="color:#cbd5e1; font-size:0.83rem; line-height:1.6;">
+                            <b>本质：</b>它是前端代码的<b>“手术室、显微镜与慢动作回放机”</b>。<br>
+                            <b>解剖结构：</b><br>
+                            • <b>左侧文件资源树：</b>展示当前页面加载的所有 JS、CSS 文件与 Source Map 原始工程；<br>
+                            • <b>中间源码阅览区：</b>带行号的代码编辑器，底部有 <code>{}</code> 代码一键格式化按钮；<br>
+                            • <b>右侧断点手术台：</b>Call Stack（调用栈）、Scope（局部/全局作用域变量）、Watch（表达式监视器）。
+                        </div>
+                    </div>
+
+                    <div class="codex-grid-2">
+                        <div class="codex-card" style="border-color: rgba(74, 222, 128, 0.3);">
+                            <div class="codex-card-title can-do">⚡ 它能做什么？（特工超能力清单）</div>
+                            <ul class="codex-item-list can">
+                                <li><b>时间定格（断点调试）：</b>在代码行号点击下断点，程序跑到这里瞬间暂停，让你单步逐行观察（Step over）；</li>
+                                <li><b>解压混淆乱码（Pretty Print）：</b>点击底部的 <code>{}</code>，把压缩成一行的丑陋代码一秒还原为整齐多行；</li>
+                                <li><b>扒出作者原始未混淆工程（Source Map）：</b>在左侧寻找 <code>webpack://</code>、<code>vite://</code> 或 <code>src/</code>，能直接阅读作者带中文注释的原始 Vue/React 源码！</li>
+                            </ul>
+                        </div>
+
+                        <div class="codex-card" style="border-color: rgba(248, 113, 113, 0.3);">
+                            <div class="codex-card-title cant-do">🚫 绝对不可以做什么？（新手最大认知误区）</div>
+                            <ul class="codex-item-list cant">
+                                <li><b>❌ 绝对看不到后端的私密源码：</b>Sources 只能看到下载到浏览器运行的前端脚本，看不到服务器上的 Java/Python/Go；</li>
+                                <li><b>❌ 临时改动不会同步到服务器：</b>在 Sources 里面改动代码，只对当前单次会话有效，刷新后重新下载原版。</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="codex-card">
+                        <div class="codex-card-title tips">🎯 老鸟特工秘籍 (Pro Tips)</div>
+                        <div style="font-size:0.8rem; color:#fef08a;">
+                            看到别人网站上有极其炫酷的动效？打开 Sources 找到对应的 JS 文件，点击 <code>{}</code> 美化，或者直接右键另存为，用 VS Code 拆开学！
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 底部回退按钮 -->
+            <div style="padding: 12px 20px; background: #0b1120; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.78rem; color: #64748b;">💡 查阅完毕后，可随时返回知识树目录或当前实战演习现场</span>
+                <button class="btn-collapse" style="margin: 0; background: var(--accent-amber); color: #000; font-weight: bold;" onclick="toggleF12Codex()">🔙 关闭并返回当前任务现场</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let audioEnabled = true;
+
+        function playSound(type) {
+            if (!audioEnabled) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'beep') {
+                    osc.frequency.setValueAtTime(440, now);
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'success') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    osc.frequency.setValueAtTime(783.99, now + 0.16);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(160, now);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch(e) {}
+        }
+
+        function toggleAudio() {
+            audioEnabled = !audioEnabled;
+            document.getElementById('sound-btn').innerText = audioEnabled ? '🔊 音效: 开' : '🔇 音效: 关';
+        }
+
+        function showView(viewName) {
+            playSound('beep');
+            const vSpot = document.getElementById('view-spotlight');
+            const vEnlight = document.getElementById('view-enlightenment');
+            const vGame = document.getElementById('view-game');
+            const gProg = document.getElementById('game-progress-box');
+            
+            if (vSpot) vSpot.style.display = (viewName === 'spotlight') ? 'flex' : 'none';
+            if (vEnlight) vEnlight.style.display = (viewName === 'enlightenment') ? 'block' : 'none';
+            if (vGame) vGame.style.display = (viewName === 'game') ? 'flex' : 'none';
+            if (gProg) gProg.style.display = (viewName === 'game') ? 'flex' : 'none';
+
+            // 更新顶栏激活按钮样式
+            const bSpot = document.getElementById('btn-nav-spotlight');
+            const bPipe = document.getElementById('btn-nav-pipeline');
+            const bGame = document.getElementById('btn-nav-game');
+            if (bSpot) bSpot.classList.toggle('active-view', viewName === 'spotlight');
+            if (bPipe) bPipe.classList.toggle('active-view', viewName === 'enlightenment');
+            if (bGame) bGame.classList.toggle('active-view', viewName === 'game');
+
+            if (viewName === 'spotlight') {
+                focusHotspot('dom-btn');
+            }
+        }
+
+        function startPlaythrough() {
+            playSound('beep');
+            showView('game');
+            initLevel(1);
+        }
+
+        let currentLevel = 1;
+        let activeTab = null;
+        let unlockedTabs = { elements: false, console: false, network: false, storage: false };
+
+        const levelData = {
+            1: {
+                title: "第一关：消失的结算按钮 (前端展示总成故障)",
+                badge: "LEVEL 1/5",
+                progress: "20%",
+                question: "【特工抉择】购物车商品清清楚楚，但底部的【立即购买】按钮消失了。第一步应该启动哪个装备？",
+                bpFaultId: "front-display",
+                options: [
+                    { label: "A. 查数据库账本", type: "wrong", tip: "档案管理员：'货在库里，前台画不画得出按钮跟我没关系！'" },
+                    { label: "B. 使用 Elements 透视镜", type: "correct", unlock: "elements" },
+                    { label: "C. 开启 Network 抓包", type: "wrong", tip: "雷达兵：'页面早已渲染完毕，当前没有任何新网络请求！'" },
+                    { label: "D. 检查机房温度", type: "wrong", tip: "机房正常，问题出在当前屏幕上！" }
+                ],
+                renderShop: () => `
+                    <div class="shop-card">
+                        <div class="shop-title">🛒 赛博小店 - 购物车</div>
+                        <div class="product-item"><span>量子微芯片 x 1</span><span style="color:#38bdf8;">¥1,299.00</span></div>
+                        <div class="total-box"><span>应付总计：</span><span style="color:#4ade80;">¥1,299.00</span></div>
+                        <button id="checkout-btn" class="btn-checkout" style="display: none;">💳 立即购买</button>
+                    </div>
+                `,
+                renderDev: () => `
+                    <div class="f12-guide-box">
+                        <b>🛠️ Elements 实操解构：</b><br>
+                        ① 步骤1：展开左侧 DOM 树，找到 <code>&lt;button id="checkout-btn"&gt;</code>；<br>
+                        ② 步骤2：看右侧 Styles 栏，寻找被披上的隐身属性；<br>
+                        ③ 步骤3：鼠标点击取消勾选 <code>display: none;</code>。
+                    </div>
+                    <div style="color:#94a3b8; margin-bottom:6px;">// Elements DOM 树实时透视：</div>
+                    <div>&lt;div class="shop-card"&gt;</div>
+                    <div style="padding-left:16px; background:rgba(56,189,248,0.1);">&lt;button id="checkout-btn" class="footer-btn"&gt;💳 立即购买&lt;/button&gt;</div>
+                    <div>&lt;/div&gt;
+                    <div class="css-rule-box">
+                        <div style="color:#fef08a; margin-bottom:6px;">Styles 样式栏 (.footer-btn)</div>
+                        <label style="display:flex; align-items:center; gap:8px; color:#f87171; cursor:pointer;">
+                            <input type="checkbox" checked onchange="fixL1(this)">
+                            <span>display: none; /* 👈 凶手！骨架在，但被隐身了 */</span>
+                        </label>
+                    </div>
+                `,
+                debrief: {
+                    title: "第 1 关排除完毕：结构与样式归位！",
+                    solved: "取消勾选了 display: none，元素重新参与渲染树绘制。",
+                    mindset: "界面看不见东西，先查 Elements！骨架（HTML）在不在？装修（CSS）有没有披隐身斗篷？",
+                    nextUnlock: "解锁装备：【Console 神经听诊器】",
+                    nextLvl: 2
+                }
+            },
+            2: {
+                title: "第二关：假死按键与瘫痪机械臂 (神经系统故障)",
+                badge: "LEVEL 2/5",
+                progress: "40%",
+                question: "【特工抉择】按钮现身了，但点击它毫无反应！应该唤醒哪件装备？",
+                bpFaultId: "front-js",
+                options: [
+                    { label: "A. Elements 透视镜", type: "wrong", tip: "透视镜显示骨架完好，它只管长相不管交互！" },
+                    { label: "B. Console 听诊器", type: "correct", unlock: "console" },
+                    { label: "C. Application 抽屉", type: "wrong", tip: "抽屉只管存数据，不能排查按键假死！" },
+                    { label: "D. 重新刷一遍 CSS", type: "wrong", tip: "门把手擦得再亮，后面的锁芯断了也按不动！" }
+                ],
+                renderShop: () => `
+                    <div class="shop-card">
+                        <div class="shop-title">🛒 赛博小店 - 购物车</div>
+                        <div class="product-item"><span>量子微芯片 x 1</span><span style="color:#38bdf8;">¥1,299.00</span></div>
+                        <div class="total-box"><span>应付总计：</span><span style="color:#4ade80;">¥1,299.00</span></div>
+                        <button id="checkout-btn" class="btn-checkout" onclick="onL2Click()">💳 立即购买 (测试点击)</button>
+                    </div>
+                `,
+                renderDev: () => `
+                    <div class="f12-guide-box">
+                        <b>🛠️ Console 实操解构：</b><br>
+                        ① 步骤1：看红色报错信息，定位到 TypeError；<br>
+                        ② 步骤2：顺着提示发现 JS 抓取了不存在的 ID 导致 null；<br>
+                        ③ 步骤3：点击修复按钮，将 ID 纠正为真实 ID <code>checkout-btn</code>。
+                    </div>
+                    <div style="background:rgba(239,68,68,0.15); border-left:3px solid #ef4444; padding:8px; border-radius:4px; margin-bottom:8px;">
+                        <span style="color:#ef4444; font-weight:bold;">❌ Uncaught TypeError: Cannot read properties of null (reading 'addEventListener')</span>
+                    </div>
+                    <div class="css-rule-box">
+                        <div style="color:#38bdf8; margin-bottom:4px;">// checkout.js 断点分析：真实 ID 是 checkout-btn</div>
+                        <div>const btn = document.getElementById('<span style="color:#ef4444; text-decoration:underline;">buy-btn-wrong</span>');</div>
+                        <div>btn.addEventListener('click', submitOrder);</div>
+                        <button class="btn-fix-action" onclick="fixL2()">🔧 修正选择器为 checkout-btn</button>
+                    </div>
+                `,
+                debrief: {
+                    title: "第 2 关排除完毕：神经系统恢复心跳！",
+                    solved: "修复了 ID 拼写错位，事件成功绑定，机械臂通电！",
+                    mindset: "按钮按了毫无动静，第一反应看 Console！红字会直接把出错的文件名和行号甩在你脸上。",
+                    nextUnlock: "解锁装备：【Network 货运雷达站】",
+                    nextLvl: 3
+                }
+            },
+            3: {
+                title: "第三关：迷路的快艇与 404 暗礁 (传输管道故障)",
+                badge: "LEVEL 3/5",
+                progress: "60%",
+                question: "【特工抉择】点击后弹出报警：'网络通信失败，订单未送达！' 该用哪个装备拦截？",
+                bpFaultId: "net-http",
+                options: [
+                    { label: "A. Network 雷达站", type: "correct", unlock: "network" },
+                    { label: "B. Elements 透视镜", type: "wrong", tip: "透视镜抓不到在空中飞行的网络集装箱！" },
+                    { label: "C. 拆开机箱查内存", type: "wrong", tip: "硬件完好，是网络航道触礁了！" },
+                    { label: "D. 检查网页字体", type: "wrong", tip: "字体只是外表，跟订单接口毫无关系！" }
+                ],
+                renderShop: () => `
+                    <div class="shop-card">
+                        <div class="shop-title">🛒 赛博小店 - 购物车</div>
+                        <div class="product-item"><span>量子微芯片 x 1</span><span style="color:#38bdf8;">¥1,299.00</span></div>
+                        <div class="total-box"><span>应付总计：</span><span style="color:#4ade80;">¥1,299.00</span></div>
+                        <button id="checkout-btn" class="btn-checkout" onclick="triggerL3Alert()">💳 立即购买</button>
+                        <div id="l3-alert" style="display:none; color:#ef4444; font-size:0.85rem; margin-top:8px; text-align:center;">💥 网络通信失败，订单未送达！</div>
+                    </div>
+                `,
+                renderDev: () => `
+                    <div class="f12-guide-box">
+                        <b>🛠️ Network 实操解构：</b><br>
+                        ① 步骤1：看请求列表中的 Status（状态码旗语），发现红色的 404；<br>
+                        ② 步骤2：检查 Name 接口地址，核对后端交接窗口文档；<br>
+                        ③ 步骤3：补齐拼写少掉的字母 'e'，改回 <code>/api/create-order</code>。
+                    </div>
+                    <table class="net-table">
+                        <tr><th>Name</th><th>Status</th><th>Type</th></tr>
+                        <tr><td style="color:#ef4444;">/api/creat-order</td><td><b style="color:#ef4444;">🔴 404 Not Found</b></td><td>fetch</td></tr>
+                    </table>
+                    <div class="css-rule-box">
+                        <div style="color:#fef08a;">🔍 面单核对：标准交接窗口是 /api/create-order，面单少打了个 'e'！</div>
+                        <button class="btn-fix-action" onclick="fixL3()">🔧 修正接口地址为 /api/create-order 并重新出港</button>
+                    </div>
+                `,
+                debrief: {
+                    title: "第 3 关排除完毕：货船安全靠岸！",
+                    solved: "修正了 API 路由地址拼写，状态码成功由 404 变为 200 OK。",
+                    mindset: "通信报错看 Network！404 找不对路，500 后厨失火，先查面单 URL 和方法对不对。",
+                    nextUnlock: "解锁装备：【Application 本地私房抽屉】",
+                    nextLvl: 4
+                }
+            },
+            4: {
+                title: "第四关：幽灵账单与刷新失忆症 (货单与存储故障)",
+                badge: "LEVEL 4/5",
+                progress: "80%",
+                question: "【特工抉择】返回 200 OK 但实付显示 '¥NaN'；刷新后登录态丢失。联合哪两个装备？",
+                bpFaultId: "storage-box",
+                options: [
+                    { label: "A. Network(看货单) + Application(翻抽屉)", type: "correct", unlock: "storage" },
+                    { label: "B. 关机洗洗睡了", type: "wrong", tip: "逃避解决不了 Bug！" },
+                    { label: "C. 只检查标题字号", type: "wrong", tip: "字号解释不了 NaN！" },
+                    { label: "D. 判定电脑中了病毒", type: "wrong", tip: "这是前后端字段不一致！" }
+                ],
+                renderShop: () => `
+                    <div class="shop-card">
+                        <div class="shop-title"><span>🛒 赛博小店</span><span id="l4-badge" style="font-size:0.75rem; background:#ef4444; padding:2px 6px; border-radius:4px;">未认证</span></div>
+                        <div class="product-item"><span>量子微芯片 x 1</span><span style="color:#38bdf8;">¥1,299.00</span></div>
+                        <div class="total-box"><span>实付金额：</span><span id="l4-price" style="color:#f87171;">¥NaN</span></div>
+                        <button class="btn-checkout" style="background:#475569;" disabled>订单已提交</button>
+                    </div>
+                `,
+                renderDev: () => `
+                    <div class="f12-guide-box">
+                        <b>🛠️ Network + Application 联合解构：</b><br>
+                        ① 步骤1：在 Network 点开请求看 Response 原文，确认后端返回的具体字段名；<br>
+                        ② 步骤2：将前端 JS 取值由 <code>res.price</code> 改为 <code>res.total_price</code>；<br>
+                        ③ 步骤3：调用 <code>localStorage.setItem</code> 将 Token 锁进抽屉。
+                    </div>
+                    <div class="css-rule-box" style="margin-top:0;">
+                        <div style="color:#38bdf8; font-weight:bold;">1. Network Response 货单原文：</div>
+                        <pre style="color:#a3e635; font-size:0.75rem;">{ "total_price": 1299, "token": "cyber_token_996" }</pre>
+                        <div style="color:#f87171; font-size:0.75rem; margin-top:2px;">前端写成：res.price ➔ 读出 undefined 导致产生 NaN！</div>
+                    </div>
+                    <div class="css-rule-box">
+                        <div style="color:#c084fc; font-weight:bold;">2. Application 抽屉 (LocalStorage)：</div>
+                        <div style="color:#94a3b8; font-size:0.75rem;">[ 抽屉空空如也，登录 Token 没存入 ]</div>
+                        <div style="font-size:0.72rem; color:#fbbf24; margin-top:4px;">💡 生产避坑：真实项目中，敏感 Token 推荐使用 HttpOnly Cookie 存储，更有效防范 XSS 脚本窃取！</div>
+                        <button class="btn-fix-action" onclick="fixL4()">🔧 修正为 res.total_price 并将 Token 入库</button>
+                    </div>
+                `,
+                debrief: {
+                    title: "第 4 关排除完毕：货单与本地抽屉完全打通！",
+                    solved: "纠正了 JSON 字段映射，实付金额恢复 ¥1,299；Token 入库，刷新不再失忆。",
+                    mindset: "请求成功但数据显示不对，先对齐 JSON 货单字段！刷新后状态消失，先查 Application 本地存储！",
+                    nextUnlock: "终极阶段：【全装备全开 · 迎战 Boss】",
+                    nextLvl: 5
+                }
+            },
+            5: {
+                title: "第五关：Boss 战——生产环境双重崩溃大危机",
+                badge: "BOSS FIGHT",
+                progress: "100%",
+                question: "【Boss 阶段一】上线后首页惨白（白屏危机）！全装备开放，线索如下，真正病根在哪？",
+                bpFaultId: "boss-phase",
+                options: [
+                    { label: "A. CSS 透明度设成了 0", type: "wrong", tip: "Elements 显示 body 里面连 DOM 树都没有！" },
+                    { label: "B. app.js 返回了 HTML 404 页，JS 遇到第一行 '<' 语法崩溃白屏", type: "correct-b1" },
+                    { label: "C. 数据库硬盘被雷劈了", type: "wrong", tip: "页面连前端 JS 还没执行起来！" },
+                    { label: "D. 鼠标坏了", type: "wrong", tip: "控制系统压根没有诞生！" }
+                ],
+                renderShop: () => `
+                    <div id="boss-blank" style="width:100%; height:240px; background:#ffffff; color:#000; display:flex; align-items:center; justify-content:center; font-weight:bold; border-radius:8px;">
+                        [ 惨白一片，没有任何渲染内容 (Blank Screen) ]
+                    </div>
+                    <div id="boss-content" style="display:none; width:100%;">
+                        <div class="shop-card" style="margin: 0 auto;">
+                            <div class="shop-title">⚡ 赛博小店 (生产环境)</div>
+                            <div id="boss-products" style="color:#ef4444; font-size:0.85rem; padding:12px; background:rgba(239,68,68,0.1); border-radius:6px;">
+                                💥 商品货架拉取失败：跨域海关拦截！
+                            </div>
+                        </div>
+                    </div>
+                `,
+                renderDev: () => `
+                    <div class="f12-guide-box">
+                        <b>🛠️ 终极 Boss 联合破案解构：</b><br>
+                        ① Console 报错：<code>Unexpected token '&lt;'</code>；<br>
+                        ② 切到 Network 翻开 <code>app.min.js</code> 的 Response，亲眼看到第一行居然是 <code>&lt;!DOCTYPE html&gt;</code>！<br>
+                        ③ 原理：单页应用路由重定向把找不到的 JS 当成 HTML 抛回，JS 引擎读不懂第一行的 <code>&lt;</code> 导致瞬间白屏！
+                    </div>
+                    <div class="css-rule-box" style="margin-top:0;">
+                        <span style="color:#ef4444; font-weight:bold;">Uncaught SyntaxError: Unexpected token '<' (at app.min.js:1)</span>
+                    </div>
+                    <div class="css-rule-box">
+                        <span style="color:#a3e635;">[Network] app.min.js 的 Response 原文：</span>
+                        <pre style="color:#fef08a; font-size:0.75rem;">&lt;!DOCTYPE html&gt; &lt;!-- 👈 浏览器要的是 JS，服务器却把 404 重定向成了整页 HTML！--&gt;</pre>
+                    </div>
+                `
+            }
+        };
+
+        const blueprintNodes = [
+            { id: "front-display", name: "1. 前端展示总成 (HTML 骨架 & CSS 四层盒模型)", desc: "决定页面实体是否存在、长相排版如何。" },
+            { id: "front-js", name: "2. 前端神经系统 (JavaScript 控制链路)", desc: "监听点击、逻辑计算、驱动机械臂改变 DOM。" },
+            { id: "net-http", name: "3. 运输管道总成 (HTTP 报文与集装箱面单)", desc: "穿梭于码头与深陆，状态码 200/404/500。" },
+            { id: "storage-box", name: "4. 本地仓储抽屉 (Cookie / LocalStorage)", desc: "浏览器分配的本地私房箱，保持刷新不失忆。" },
+            { id: "boss-phase", name: "5. 后厨与海关放行总成 (CORS 与静态分发)", desc: "服务器分发静态文件、响应头出具有效放行凭据。" }
+        ];
+
+        function renderBlueprint() {
+            const list = document.getElementById('blueprint-list');
+            const cur = levelData[currentLevel];
+            list.innerHTML = blueprintNodes.map(n => {
+                const isFault = (n.id === cur.bpFaultId);
+                return `
+                    <div class="blueprint-node" style="background:#1e293b; border:1px solid ${isFault ? '#ef4444' : '#334155'}; border-radius:8px; padding:12px; margin-bottom:10px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <b style="color:${isFault ? '#f87171' : '#4ade80'};">${n.name}</b>
+                            <span style="font-size:0.72rem; padding:2px 8px; border-radius:12px; font-weight:700; background:${isFault ? 'rgba(239,68,68,0.2)' : 'rgba(74,222,128,0.2)'}; color:${isFault ? '#f87171' : '#4ade80'};">
+                                ${isFault ? '🚨 出现断点故障' : '🟢 运转正常'}
+                            </span>
+                        </div>
+                        <div style="font-size:0.8rem; color:#94a3b8;">${n.desc}</div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('bp-indicator').innerText = '🚨 存在断点';
+        }
+
+        function initLevel(lvl) {
+            currentLevel = lvl;
+            const data = levelData[lvl];
+            document.getElementById('level-badge').innerText = data.badge;
+            document.getElementById('progress-fill').style.width = data.progress;
+            document.getElementById('mission-title').innerText = data.title;
+            document.getElementById('question-box').innerText = data.question;
+            document.getElementById('mission-feedback').innerText = "等待特工决策...";
+            document.getElementById('mission-feedback').style.color = "#94a3b8";
+
+            document.getElementById('shop-viewport').innerHTML = data.renderShop();
+
+            const optBox = document.getElementById('options-box');
+            optBox.innerHTML = '';
+            data.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-opt';
+                btn.innerText = opt.label;
+                btn.onclick = () => handleDecision(opt, btn);
+                optBox.appendChild(btn);
+            });
+
+            renderBlueprint();
+
+            if (lvl === 5) {
+                ['elements', 'console', 'network', 'storage'].forEach(t => unlockTab(t));
+                switchTab('console');
+            } else if (!unlockedTabs[activeTab]) {
+                document.getElementById('dev-content').innerHTML = `<div style="color:#64748b; padding:30px; text-align:center;">⚡ 仪器未解锁，请先在下方指挥台决策！</div>`;
+            }
+        }
+
+        function handleDecision(opt, btnEl) {
+            const fb = document.getElementById('mission-feedback');
+            if (opt.type === "wrong") {
+                playSound('error');
+                btnEl.classList.add('wrong');
+                fb.style.color = "#ef4444";
+                fb.innerText = `❌ 判断偏差：${opt.tip}`;
+            } else if (opt.type === "correct") {
+                playSound('success');
+                fb.style.color = "#4ade80";
+                fb.innerText = `🎯 判断精确！装备已成功唤醒，请在右侧 F12 动手排查！`;
+                unlockTab(opt.unlock);
+                switchTab(opt.unlock);
+            } else if (opt.type === "correct-b1") {
+                playSound('success');
+                fb.style.color = "#4ade80";
+                fb.innerText = `🎯 击破阶段一！看穿了 '<' 的本质！正在修复静态路径...`;
+                setTimeout(() => {
+                    document.getElementById('boss-blank').style.display = 'none';
+                    document.getElementById('boss-content').style.display = 'block';
+                    triggerBossPhase2();
+                }, 1400);
+            }
+        }
+
+        function unlockTab(tabKey) {
+            unlockedTabs[tabKey] = true;
+            const el = document.getElementById(`tab-${tabKey}`);
+            if (el) el.classList.remove('locked');
+        }
+
+        function switchTab(tabKey) {
+            if (!unlockedTabs[tabKey]) return;
+            playSound('beep');
+            activeTab = tabKey;
+            document.querySelectorAll('.dev-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(`tab-${tabKey}`).classList.add('active');
+            document.getElementById('dev-content').innerHTML = levelData[currentLevel].renderDev();
+        }
+
+        function showDebrief(lvl) {
+            playSound('success');
+            const data = levelData[lvl].debrief;
+            const modal = document.getElementById('modal-debrief');
+            const body = document.getElementById('debrief-body');
+            body.innerHTML = `
+                <div class="debrief-card">
+                    <h3 style="color:#4ade80; margin-bottom:12px;">🏆 ${data.title}</h3>
+                    <div class="debrief-item"><b>🔧 修复动作：</b><span>${data.solved}</span></div>
+                    <div class="debrief-item"><b>🧠 特工心得：</b><span style="color:#fef08a;">${data.mindset}</span></div>
+                    <div class="debrief-item"><b>🎁 战利品：</b><span style="color:#38bdf8;">${data.nextUnlock}</span></div>
+                </div>
+                <button class="btn-next-level" onclick="nextLevelFromDebrief(${data.nextLvl})">进入下一关卡 (第 ${data.nextLvl} 关) ➔</button>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        function nextLevelFromDebrief(nextLvl) {
+            document.getElementById('modal-debrief').style.display = 'none';
+            initLevel(nextLvl);
+        }
+
+        function fixL1(cb) {
+            playSound('beep');
+            const btn = document.getElementById('checkout-btn');
+            if (!cb.checked) {
+                btn.style.display = 'block';
+                document.getElementById('mission-feedback').innerText = "🎉 display:none 被点掉，按钮破除隐身！";
+                setTimeout(() => showDebrief(1), 600);
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        function onL2Click() {
+            playSound('error');
+            alert("没有任何反应！机械臂没有响应！快去 Console 查看哪一行报错！");
+        }
+        function fixL2() {
+            document.getElementById('mission-feedback').innerText = "🎉 修复成功！事件绑定至 checkout-btn，机械臂恢复心跳！";
+            setTimeout(() => showDebrief(2), 600);
+        }
+
+        function triggerL3Alert() {
+            playSound('error');
+            document.getElementById('l3-alert').style.display = 'block';
+        }
+        function fixL3() {
+            document.getElementById('l3-alert').style.display = 'none';
+            document.getElementById('mission-feedback').innerText = "🎉 航线修正！状态码变为 200 OK，货物安全靠岸！";
+            setTimeout(() => showDebrief(3), 600);
+        }
+
+        function fixL4() {
+            document.getElementById('l4-price').style.color = "#4ade80";
+            document.getElementById('l4-price').innerText = "¥1,299.00 (计算正确)";
+            document.getElementById('l4-badge').style.background = "#22c55e";
+            document.getElementById('l4-badge').innerText = "已认证: Token已入库";
+            document.getElementById('mission-feedback').innerText = "🎉 货单与本地凭证均已修复！";
+            setTimeout(() => showDebrief(4), 600);
+        }
+
+        function triggerBossPhase2() {
+            playSound('error');
+            document.getElementById('question-box').innerText = "【Boss 阶段二】白屏破除后，商品列表弹出红字'跨域拦截(CORS)'！真正拦截者是谁？";
+            document.getElementById('dev-content').innerHTML = `
+                <div style="background:rgba(239,68,68,0.15); padding:10px; border-radius:6px; border-left:3px solid #ef4444;">
+                    ❌ <b>Access to fetch at 'https://api.shop.com' from origin 'https://shop.com' has been blocked by CORS policy:</b><br>
+                    <span>No 'Access-Control-Allow-Origin' header is present on the requested resource.</span>
+                </div>
+                <div style="margin-top:10px; font-size:0.8rem; color:#cbd5e1; line-height:1.6;">
+                    📡 <b>证据链核对：</b><br>
+                    1. Network 显示请求其实送出去了；<br>
+                    2. 后端服务器其实也处理并送出了响应；<br>
+                    3. <b>真正举起大刀拦截货物的，是当前浏览器（海关）！</b>因为海关核对发现后端没有出具放行公函。
+                </div>
+                <button class="btn-fix-action" onclick="finishBoss()">🛡️ 在后端出具有效放行公函 (Access-Control-Allow-Origin: *)</button>
+            `;
+
+            document.getElementById('options-box').innerHTML = `
+                <button class="btn-opt" onclick="alert('错误：数据库在最深处，跨域拦截发生在浏览器海关口！')">A. 档案库(数据库)锁死了</button>
+                <button class="btn-opt" onclick="alert('错误：网络线路上没有截断，货船已经顺利往返！')">B. 运输航线(HTTP)被物理切断</button>
+                <button class="btn-opt" style="border-color:#4ade80;" onclick="finishBoss()">C. 浏览器发现后端没开放行证明，依据同源安全铁律强行扣押货物</button>
+                <button class="btn-opt" onclick="alert('错误：JS 代码逻辑完好，是被浏览器沙箱规则拦下了！')">D. 前端 JS 写错了语法</button>
+            `;
+        }
+
+        function finishBoss() {
+            playSound('success');
+            document.getElementById('boss-products').innerHTML = `
+                <div style="color:#4ade80; font-weight:bold; margin-bottom:6px;">🟢 商品列表全部加载成功 (CORS 通关)：</div>
+                <div style="color:#e2e8f0; font-size:0.85rem;">1. 量子微芯片 - ¥1,299.00</div>
+                <div style="color:#e2e8f0; font-size:0.85rem;">2. 赛博机械手串 - ¥399.00</div>
+                <div style="color:#e2e8f0; font-size:0.85rem;">3. 全息防蓝光目镜 - ¥680.00</div>
+            `;
+            document.getElementById('mission-title').innerHTML = "🏆 通关大吉！赛博小店全面复活！";
+            document.getElementById('question-box').innerHTML = "恭喜特工！你已经彻底打通：全景大地图 ➔ 蓝图判断断点 ➔ 选用正确 F12 装备 ➔ 顺藤摸瓜 ➔ 精准修复！";
+            document.getElementById('options-box').innerHTML = `
+                <div style="grid-column: span 4; background:rgba(74,222,128,0.15); border:1px solid #4ade80; padding:12px; border-radius:6px; text-align:center; color:#4ade80; font-weight:bold;">
+                    🏅 获得终极特工徽章：【全栈架构与排错大师】！
+                </div>
+            `;
+            document.getElementById('bp-indicator').innerText = '🟢 全部健康';
+        }
+
+        function toggleBlueprint() {
+            const m = document.getElementById('modal-blueprint');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+        function toggleReverseLab() {
+            const m = document.getElementById('modal-reverselab');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+        function closeModals(e) {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        }
+
+        // F12 拟真实景透视舱控制器 (划到哪解释到哪)
+        const SPOTLIGHT_REGISTRY = {
+            'arrow': {
+                badge: '仪器总操纵杆：元素瞄准指针',
+                title: '↖ 检查/选择元素指针 Inspect (快捷键 Ctrl + Shift + C)',
+                desc: '探索任何网页的第一把钥匙！点一下它，鼠标在网页上晃到哪个按钮或图片，底下就自动高亮它的代码。',
+                superpower: '⚡ 超能力：哪里不会点哪里，1 秒在茫茫代码海中揪出目标零件！',
+                taboo: '🚫 边界：只是用来查看和瞄准，点击不会触发网页上的跳转事件。',
+                highlightTarget: 'mock-btn-target'
+            },
+            'device': {
+                badge: '视口变身器：移动端模拟器',
+                title: '📱 切换设备仿真 Device Mode (快捷键 Ctrl + Shift + M)',
+                desc: '把电脑宽屏一秒压缩成 iPhone、iPad 等各种手机尺寸，测试排版在手机上会不会错位变形。',
+                superpower: '⚡ 超能力：无需真机，直接模拟触摸滑动与旋转屏幕！',
+                taboo: '🚫 边界：只模拟屏幕尺寸，无法模拟真机摄像头等底层硬件。',
+                highlightTarget: null
+            },
+            'tab-elements': {
+                badge: '第一大核心面板：Elements 结构透视镜',
+                title: '🔍 Elements (元素) 活体骨架与样式调色板',
+                desc: '存放当前网页在内存 RAM 里的活体 DOM 树。排查“东西看不见、颜色不对、排版挤压”的必经之地！',
+                superpower: '⚡ 超能力：现场改字、现场改样式、双击改盒模型尺寸即时生效。',
+                taboo: '🚫 边界：修改全在临时内存里，按 F5 刷新立刻打回原形，改不坏服务器！',
+                highlightTarget: 'mock-cart-target'
+            },
+            'tab-console': {
+                badge: '第二大核心面板：Console 控制台听诊器',
+                title: '🩺 Console (控制台) 听诊器与现场命令行',
+                desc: '网页 JavaScript 神经系统的仪表盘。按键假死、代码报错红字，全在这里主动打出病历单！',
+                superpower: '⚡ 超能力：可以直接敲入任意代码执行，用 $0 隔空操控被选中的元素！',
+                taboo: '🚫 边界：报错不是惩罚，是机器在向你严谨报修；执行的操作无法按 Ctrl+Z 撤销。',
+                highlightTarget: null
+            },
+            'tab-network': {
+                badge: '第三大核心面板：Network 货运雷达站',
+                title: '📡 Network (网络) 货运快艇雷达站',
+                desc: '记录每一笔与服务器之间的通信报文。看请求发出去没有、接口有没有迷路 404、后端送回了什么数据。',
+                superpower: '⚡ 超能力：过滤 Fetch/XHR 专看数据流，抓取真实的 JSON 货单原文。',
+                taboo: '🚫 边界：200 OK 绝不等于业务成功；抓不到打开 F12 之前的历史请求。',
+                highlightTarget: null
+            },
+            'tab-storage': {
+                badge: '第四大核心面板：Application 本地私房抽屉',
+                title: '🗄️ Application (应用/存储) 随身储物柜',
+                desc: '浏览器分配给当前网站的本地抽屉。放着登录 Token、用户偏好。刷新页面不失忆全靠它！',
+                superpower: '⚡ 超能力：双击修改键值对，一键点击 Clear site data 模拟纯净新访客。',
+                taboo: '🚫 边界：JS 绝对偷看不到带有 HttpOnly 标记的 Cookie！',
+                highlightTarget: null
+            },
+            'tab-sources': {
+                badge: '第五大核心面板：Sources 源码手术台',
+                title: '🔬 Sources (源代码) 源码手术台与时间定格器',
+                desc: '支持在代码行号下断点，让时间暂停在案发瞬间，还能寻找 Source Map 扒出作者未混淆原版工程！',
+                superpower: '⚡ 超能力：打断点单步调试；点击 {} 一键格式化压缩成一团的代码。',
+                taboo: '🚫 边界：只能看到下载到浏览器的前端脚本，看不到服务器上的私密代码。',
+                highlightTarget: null
+            },
+            'dom-card': {
+                badge: 'DOM 树节点：外层包装卡片',
+                title: '📦 <div class="mock-cart-card">',
+                desc: '这是左侧整个购物车白底卡片的骨架大容器。它用 CSS 规定了最大宽度、圆角和阴影。',
+                superpower: '⚡ 超能力：选中它按 Delete，整个购物车卡片瞬间在屏幕上消失！',
+                taboo: '🚫 边界：删掉只是本地视图消失，刷新网页重新绘制。',
+                highlightTarget: 'mock-cart-target'
+            },
+            'dom-item': {
+                badge: 'DOM 树节点：商品行',
+                title: '📄 <div class="product-item">量子微芯片...</div>',
+                desc: '代表购物车里的一件具体商品。包含文字、单价和数量。',
+                superpower: '⚡ 超能力：双击里面的数字 ¥1,299，改成 ¥0.01，屏幕立刻变过来！',
+                taboo: '🚫 边界：改了只是自娱自乐，点击提交订单时后端依旧按真实数据库价格扣款。',
+                highlightTarget: 'mock-item-target'
+            },
+            'dom-btn': {
+                badge: 'DOM 树节点：核心交互按钮',
+                title: '💳 <button id="checkout-btn">立即购买</button>',
+                desc: '这是左侧绿色【立即购买】按钮在机器代码里的活体身份证！左边是皮肉，右边是骨骼。',
+                superpower: '⚡ 超能力：可以在右边双击把它从 button 改成 input，看它怎么变形！',
+                taboo: '🚫 边界：如果 JS 绑错了 ID，或者 CSS 把它 display:none，它就废掉了。',
+                highlightTarget: 'mock-btn-target'
+            },
+            'styles-rule': {
+                badge: 'Styles 试衣间：CSS 样式规则',
+                title: '🎨 Styles (样式) .mock-btn-buy { background: #00ffaa; }',
+                desc: '控制按钮穿什么衣服、涂什么颜色。每一条规则前面都有一个复选框，取消勾选就脱掉这件衣服。',
+                superpower: '⚡ 超能力：现在点一下勾选框，看左边按钮的绿色背景立刻消失！',
+                taboo: '🚫 边界：天生是大喇叭广播覆盖，后来者居上、具体者优先。',
+                highlightTarget: 'mock-btn-target'
+            },
+            'boxmodel': {
+                badge: 'Computed 视窗：同心四层包装盒模型',
+                title: '📐 Computed (已计算) 盒模型: Margin ➔ Border ➔ Padding ➔ Content',
+                desc: '任何网页零件都像易碎品寄快递：外边距 Margin 隔开邻居，外壳 Border 防撞，内垫 Padding 防震，中心 Content 是实物。',
+                superpower: '⚡ 超能力：双击图上的数字改数值，直观看到左边按钮被撑大或推开！',
+                taboo: '🚫 边界：Padding 加太大容易把容器撑破导致排版断行。',
+                highlightTarget: 'mock-btn-target'
+            },
+            'console-cli': {
+                badge: '控制台输入区：直通机器大脑的对讲机',
+                title: '⚡ Console (控制台) > 命令行交互终端',
+                desc: '直接在此输入 JavaScript 命令与当前页面对话。机器生病时，红字报错也是从这里大声喊出来的！',
+                superpower: '⚡ 超能力：输入 $0.style.display="none" 可以直接用代码把选中的按钮隐身！',
+                taboo: '🚫 边界：执行的变量只在当前会话生效。',
+                highlightTarget: null
+            }
+        };
+
+        function toggleF12Spotlight() {
+            playSound('beep');
+            const m = document.getElementById('modal-f12-spotlight');
+            if (!m) return;
+            const isOpen = (m.style.display === 'flex');
+            m.style.display = isOpen ? 'none' : 'flex';
+            if (!isOpen) {
+                focusHotspot('dom-btn');
+            }
+        }
+
+        function focusHotspot(key) {
+            playSound('beep');
+            const data = SPOTLIGHT_REGISTRY[key];
+            if (!data) return;
+
+            // 移除所有热区高亮，添加当前激活项
+            document.querySelectorAll('.f12-hotspot').forEach(el => el.classList.remove('active-focus'));
+            const targetEl = document.getElementById('hs-' + key);
+            if (targetEl) targetEl.classList.add('active-focus');
+
+            // 联动左侧网页实体
+            document.querySelectorAll('.mock-cart-card, .mock-item-row, .mock-btn-buy').forEach(el => {
+                el.classList.remove('target-glow');
+                el.classList.remove('highlighted');
+            });
+            if (data.highlightTarget) {
+                const webTarget = document.getElementById(data.highlightTarget);
+                if (webTarget) {
+                    webTarget.classList.add('target-glow');
+                    if (data.highlightTarget === 'mock-cart-target') webTarget.classList.add('highlighted');
+                }
+            }
+
+            // 更新下方雷达 HUD 说明
+            document.getElementById('radar-badge').innerText = '正在透视：' + data.badge;
+            document.getElementById('radar-title').innerHTML = data.title;
+            document.getElementById('radar-desc').innerHTML = data.desc;
+            document.getElementById('radar-super').innerHTML = data.superpower;
+            document.getElementById('radar-taboo').innerHTML = data.taboo;
+        }
+
+        function toggleMockStyle(cb) {
+            playSound('beep');
+            const btn = document.getElementById('mock-btn-target');
+            if (!btn) return;
+            if (cb.checked) {
+                btn.style.background = '#00ffaa';
+                btn.style.color = '#000';
+            } else {
+                btn.style.background = 'transparent';
+                btn.style.color = '#fff';
+                btn.style.border = '1px solid #334155';
+            }
+        }
+
+        // F12 武器库解构馆弹窗与 Tab 切换机制 (带无感回退)
+        function toggleF12Codex() {
+            playSound('beep');
+            const m = document.getElementById('modal-f12-codex');
+            if (!m) return;
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function switchCodexTab(paneId, btnEl) {
+            playSound('beep');
+            document.querySelectorAll('.codex-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.codex-pane').forEach(p => p.classList.remove('active'));
+
+            btnEl.classList.add('active');
+            const p = document.getElementById(paneId);
+            if (p) p.classList.add('active');
+        }
+
+        
+        // 全栈单向流水线交互控制器
+        let currentPipelineStage = 1;
+        let pipelineMode = 'focus'; // 'focus' or 'all'
+
+        const STAGE_DESCRIPTIONS = {
+            1: "【站台一：浏览器前台呈现】聚焦查看 HTML 骨架、CSS 样式盒模型与 JS 神经中枢 (3项)",
+            2: "【站台二：运输通信航道】聚焦查看 Network 网络通信、HTTP 报文与 API 传菜窗口 (2项)",
+            3: "【站台三：后台中枢金库】聚焦查看 Server 后厨逻辑与 Database 持久档案库 (2项)",
+            4: "【站台四：本地沙箱防线】聚焦查看 Application 本地存储与 CORS 海关跨域防线 (1项)"
+        };
+
+        function selectPipelineStage(stageNum) {
+            playSound('beep');
+            currentPipelineStage = stageNum;
+            // 更新节点状态
+            for (let i = 1; i <= 4; i++) {
+                const node = document.getElementById('pipe-node-' + i);
+                if (node) node.classList.toggle('active', i === stageNum);
+            }
+            // 更新说明文案
+            const descEl = document.getElementById('pipeline-current-desc');
+            if (descEl && STAGE_DESCRIPTIONS[stageNum]) {
+                descEl.innerText = STAGE_DESCRIPTIONS[stageNum];
+            }
+            applyPipelineFilter();
+        }
+
+        function setPipelineMode(mode) {
+            playSound('beep');
+            pipelineMode = mode;
+            document.getElementById('btn-mode-focus').classList.toggle('active', mode === 'focus');
+            document.getElementById('btn-mode-all').classList.toggle('active', mode === 'all');
+            
+            const descEl = document.getElementById('pipeline-current-desc');
+            if (mode === 'all') {
+                if (descEl) descEl.innerText = "【全网格展开】通览整座赛博工业城的全部 8 个总成架构";
+            } else {
+                if (descEl && STAGE_DESCRIPTIONS[currentPipelineStage]) {
+                    descEl.innerText = STAGE_DESCRIPTIONS[currentPipelineStage];
+                }
+            }
+            applyPipelineFilter();
+        }
+
+        function applyPipelineFilter() {
+            const cards = document.querySelectorAll('.tree-branch-card');
+            cards.forEach(card => {
+                const stage = parseInt(card.dataset.stage);
+                if (pipelineMode === 'all' || stage === currentPipelineStage) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // 知识树主干分类过滤与回退机制
+        function filterTree(cat, btnEl) {
+            playSound('beep');
+            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+
+            const cards = document.querySelectorAll('.tree-branch-card');
+            cards.forEach(c => {
+                if (cat === 'all' || c.dataset.cat === cat) {
+                    c.style.display = 'flex';
+                } else {
+                    c.style.display = 'none';
+                }
+            });
+        }
+
+        // 展开/收起深层检修档案
+        function toggleDossier(id) {
+            playSound('beep');
+            const box = document.getElementById(id);
+            if (!box) return;
+            const isOpen = box.classList.contains('active');
+            box.classList.toggle('active', !isOpen);
+        }
+
+        // 默认第一视窗为全栈启蒙大地图
+        window.onload = () => { showView('spotlight'); selectPipelineStage(1); };
+    </script>
+</body>
+</html>

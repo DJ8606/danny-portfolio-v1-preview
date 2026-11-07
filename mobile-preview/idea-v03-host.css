@@ -1,0 +1,8 @@
+/* Isolate the existing V03 page and restore the host when navigating away. */
+body.idea-route{overflow:hidden;background:#0c1015}
+body.idea-route>.site-header,body.idea-route>.site-footer,body.idea-route>.ambient-light,body.idea-route>.noise{display:none}
+.idea-host{position:fixed;inset:0;z-index:30;display:grid;grid-template-rows:46px minmax(0,1fr);background:#0c1015}
+.idea-host-bar{display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid #303742;background:#10151b;color:#a6aab2;font:10px ui-monospace,Consolas,monospace;letter-spacing:.14em}
+.idea-host-bar a{color:#eee8dc;border:1px solid #554d40;padding:7px 11px;letter-spacing:0}
+.idea-host-bar a:hover,.idea-host-bar a:focus-visible{border-color:#d8af76}
+.idea-host iframe{display:block;width:100%;height:100%;border:0;background:#0c1015}

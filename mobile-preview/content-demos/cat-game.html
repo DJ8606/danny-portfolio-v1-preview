@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>彩虹小猫星星大冒险 · 完整版</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:"Comic Sans MS","幼圆",sans-serif;}
+  body{background:#fef6ff;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden;}
+  #gameContainer{position:relative;width:100%;max-width:900px;aspect-ratio:16/9;background:#000;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.3);}
+  canvas{display:block;width:100%;height:100%;touch-action:none;}
+  #ui{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:10;gap:5px;}
+  .badge{background:rgba(255,255,255,0.95);padding:6px 12px;border-radius:18px;font-weight:bold;color:#ff4da6;box-shadow:0 3px 8px rgba(0,0,0,0.2);font-size:13px;white-space:nowrap;}
+  #hearts{font-size:18px;}
+  #startScreen, #levelScreen, #winScreen{position:absolute;inset:0;background:linear-gradient(180deg,#a1e3ff,#ffc8e3);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;z-index:20;padding:15px;overflow-y:auto;}
+  h1{font-size:clamp(26px,5vw,44px);color:#ff3b8d;text-shadow:3px 3px 0 #fff;margin-bottom:8px;}
+  p{font-size:clamp(15px,2.3vw,20px);color:#5a2a6b;margin:6px 0;}
+  button{background:#ffde59;border:none;padding:12px 24px;border-radius:26px;font-size:18px;font-weight:bold;color:#7a3e00;cursor:pointer;box-shadow:0 4px 0 #e0b800;margin:6px;transition:transform 0.1s;}
+  button:active{transform:translateY(2px);box-shadow:0 2px 0 #e0b800;}
+  button.small{padding:8px 14px;font-size:14px;}
+  #stickers{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:10px 0;max-width:400px;}
+  .sticker{width:46px;height:46px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 2px 5px rgba(0,0,0,0.2);position:relative;}
+  .locked{filter:grayscale(1);opacity:0.4;}
+  #skinSelect{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:10px 0;}
+  .skin{width:60px;height:70px;background:white;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 0 #ddd;border:3px solid transparent;}
+  .skin.active{border-color:#ff3b8d;transform:scale(1.05);}
+  .skin.locked{opacity:0.5;}
+  .skin span{font-size:28px;}
+  .skin small{font-size:11px;color:#666;}
+  #powerChoice{display:flex;gap:10px;margin:12px 0;}
+  .power{padding:10px;border-radius:12px;background:white;cursor:pointer;border:3px solid transparent;box-shadow:0 2px 5px rgba(0,0,0,0.15);}
+  .power.active{border-color:#00c853;}
+  #hint{position:absolute;bottom:10px;width:100%;text-align:center;color:white;font-size:14px;text-shadow:1px 1px 3px black;pointer-events:none;}
+</style>
+</head>
+<body>
+<div id="gameContainer">
+  <canvas id="game" width="900" height="506"></canvas>
+  <div id="ui">
+    <div class="badge" id="levelName">1. 彩虹草地</div>
+    <div class="badge">⭐ <span id="stars">0</span>/<span id="need">5</span></div>
+    <div class="badge" id="hearts">❤️❤️❤️</div>
+  </div>
+  <div id="hint">点屏幕 / 按空格 跳跃</div>
+
+  <div id="startScreen">
+    <h1>🌈 彩虹小猫大冒险</h1>
+    <p>帮咪咪找回10片彩虹！</p>
+    <div id="stickers"></div>
+    <p style="margin-top:8px;font-weight:bold">选你的小猫皮肤：</p>
+    <div id="skinSelect"></div>
+    <button id="playBtn">开始冒险！</button>
+    <p style="font-size:12px;color:#777">已通关 <span id="progress">0</span>/10 · 皮肤越多越厉害！</p>
+  </div>
+
+  <div id="levelScreen" style="display:none">
+    <h1 id="lvlTitle">第1关</h1>
+    <p id="lvlDesc">吃5颗星星！</p>
+    <p>出发前选一个道具：</p>
+    <div id="powerChoice">
+      <div class="power active" data-p="none"><div style="font-size:28px">🚫</div><small>不用</small></div>
+      <div class="power" data-p="magnet"><div style="font-size:28px">🧲</div><small>磁铁</small></div>
+      <div class="power" data-p="shield"><div style="font-size:28px">🛡️</div><small>护盾</small></div>
+      <div class="power" data-p="spring"><div style="font-size:28px">👟</div><small>弹簧</small></div>
+    </div>
+    <button id="goBtn">出发！</button>
+  </div>
+
+  <div id="winScreen" style="display:none">
+    <h1>🎉 太棒啦！</h1>
+    <p id="winText">你收集了彩虹碎片！</p>
+    <div class="sticker" id="rewardSticker" style="width:80px;height:80px;font-size:48px;margin:8px;">🐱</div>
+    <p id="unlockSkin" style="color:#ff3b8d;font-weight:bold"></p>
+    <button id="nextBtn">下一关</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W=900, H=506;
+
+let gameState='menu', currentLevel=0, starsCollected=0, lives=3, worldX=0;
+let stickersUnlocked = JSON.parse(localStorage.getItem('catStickers')||'null') || Array(10).fill(false);
+stickersUnlocked[0]=true;
+let selectedSkin = parseInt(localStorage.getItem('catSkin')||'0');
+let chosenPower='none';
+
+const skins=[
+  {emoji:'🐱',name:'经典',need:0},
+  {emoji:'🍬',name:'糖果',need:1},
+  {emoji:'🐻',name:'熊熊',need:3},
+  {emoji:'🚀',name:'宇航',need:4},
+  {emoji:'🐠',name:'潜水',need:5},
+  {emoji:'🦖',name:'恐龙',need:6},
+  {emoji:'☁️',name:'云朵',need:7},
+  {emoji:'👑',name:'公主',need:8},
+  {emoji:'🌈',name:'彩虹',need:9},
+];
+
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+function beep(f,d,t='sine',v=0.18){if(audioCtx.state==='suspended')audioCtx.resume();const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=t;o.frequency.value=f;g.gain.value=v;o.connect(g);g.connect(audioCtx.destination);o.start();g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d);o.stop(audioCtx.currentTime+d);}
+
+const levels=[
+  {name:"1. 彩虹草地",desc:"吃到5颗星星！",bg1:"#87CEEB",bg2:"#c2f0ff",ground:"#7CFC00",gravity:0.6,speed:3.2,need:5,end:1400,
+   stars:[{x:350,y:300},{x:550,y:260},{x:750,y:320},{x:900,y:240},{x:1100,y:300},{x:1250,y:280}],
+   obstacles:[{x:400,w:45,h:45},{x:700,w:45,h:45},{x:1000,w:45,h:45}],springs:[],powerups:[],bubbles:[]},
+  {name:"2. 糖果山坡",desc:"踩果冻弹高高！",bg1:"#FFD1DC",bg2:"#fff0f5",ground:"#ff85b3",gravity:0.6,speed:3.5,need:8,end:1700,
+   stars:[{x:400,y:280},{x:580,y:220},{x:720,y:300},{x:900,y:200},{x:1080,y:280},{x:1220,y:240},{x:1380,y:300},{x:1500,y:260}],
+   obstacles:[{x:480,w:40,h:35},{x:840,w:40,h:35},{x:1180,w:40,h:35},{x:1450,w:40,h:35}],springs:[{x:650,w:60,h:20},{x:1050,w:60,h:20}],powerups:[],bubbles:[]},
+  {name:"3. 咕噜小河",desc:"小心小乌龟！",bg1:"#a0e9ff",bg2:"#e0f7ff",ground:"#4db8ff",gravity:0.6,speed:3.3,need:7,end:1600,
+   stars:[{x:380,y:270},{x:600,y:250},{x:820,y:300},{x:1020,y:230},{x:1240,y:280},{x:1380,y:260},{x:1480,y:300}],
+   obstacles:[{x:520,w:50,h:30,type:'turtle'},{x:920,w:50,h:30,type:'turtle'},{x:1320,w:50,h:30,type:'turtle'}],springs:[],powerups:[{x:750,type:'shield'}],bubbles:[]},
+  {name:"4. BOSS瞌睡熊",desc:"别碰鼻涕泡泡！",bg1:"#cbb5ff",bg2:"#f0e6ff",ground:"#9a7bff",gravity:0.55,speed:2.8,need:10,end:1800,
+   stars:Array.from({length:12},(_,i)=>({x:350+i*120,y:240+Math.sin(i)*40})),
+   obstacles:[{x:600,w:40,h:40},{x:1100,w:40,h:40}],springs:[],powerups:[{x:900,type:'magnet'}],bubbles:[{x:500},{x:800},{x:1200},{x:1500}],boss:'🐻'},
+  {name:"5. 太空漂漂",desc:"月球慢动作！",bg1:"#0a0a2a",bg2:"#1a1a4a",ground:"#3a3a6a",gravity:0.28,speed:3.6,need:9,end:1750,
+   stars:[{x:400,y:220},{x:620,y:180},{x:840,y:240},{x:1020,y:160},{x:1200,y:220},{x:1360,y:200},{x:1500,y:240},{x:1620,y:190},{x:1700,y:260}],
+   obstacles:[{x:700,w:45,h:45},{x:1100,w:45,h:45},{x:1440,w:45,h:45}],springs:[],powerups:[{x:950,type:'magnet'},{x:1300,type:'shield'}],bubbles:[]},
+  {name:"6. 海底泡泡",desc:"潜水找星星！",bg1:"#006994",bg2:"#00b4d8",ground:"#004d6b",gravity:0.5,speed:3.2,need:10,end:1850,
+   stars:[{x:380,y:260},{x:560,y:220},{x:740,y:280},{x:920,y:200},{x:1100,y:250},{x:1280,y:230},{x:1460,y:270},{x:1620,y:210},{x:1720,y:260},{x:1780,y:240}],
+   obstacles:[{x:500,w:45,h:35,type:'crab'},{x:900,w:45,h:35,type:'crab'},{x:1350,w:45,h:35,type:'crab'}],springs:[],powerups:[{x:1000,type:'magnet'}],bubbles:[{x:600},{x:950},{x:1300}]},
+  {name:"7. 恐龙山谷",desc:"尾巴扫过来啦！",bg1:"#d2a679",bg2:"#f5deb3",ground:"#8b5a2b",gravity:0.6,speed:4.0,need:12,end:2000,
+   stars:Array.from({length:14},(_,i)=>({x:350+i*115,y:250+Math.cos(i)*30})),
+   obstacles:[{x:600,w:50,h:40,type:'dino'},{x:1050,w:50,h:40,type:'dino'},{x:1500,w:50,h:40,type:'dino'},{x:1750,w:40,h:40}],springs:[{x:850,w:60,h:20},{x:1400,w:60,h:20}],powerups:[{x:1200,type:'shield'}],bubbles:[]},
+  {name:"8. BOSS爱哭云",desc:"雨滴别淋到！",bg1:"#b0c4de",bg2:"#e6f0ff",ground:"#7a8fb5",gravity:0.58,speed:3.4,need:11,end:1900,
+   stars:Array.from({length:12},(_,i)=>({x:400+i*125,y:230})),
+   obstacles:[{x:700,w:40,h:35},{x:1300,w:40,h:35}],springs:[],powerups:[{x:950,type:'shield'}],bubbles:[{x:550},{x:750},{x:950},{x:1150},{x:1450},{x:1650}],boss:'☁️'},
+  {name:"9. 城堡屋顶",desc:"瓦片好滑！",bg1:"#ff9a8b",bg2:"#ffdde1",ground:"#c86b5a",gravity:0.6,speed:4.3,need:13,end:2100,
+   stars:Array.from({length:15},(_,i)=>({x:350+i*120,y:240})),
+   obstacles:[{x:500,w:40,h:30},{x:800,w:40,h:30},{x:1100,w:40,h:30},{x:1450,w:40,h:30},{x:1800,w:40,h:30}],springs:[{x:650,w:50,h:15},{x:1000,w:50,h:15},{x:1350,w:50,h:15},{x:1700,w:50,h:15}],powerups:[{x:900,type:'magnet'},{x:1600,type:'spring'}],bubbles:[]},
+  {name:"10. 星星王国",desc:"终极派对！",bg1:"#ff00cc",bg2:"#333399",ground:"#ffde59",gravity:0.55,speed:3.8,need:15,end:2200,
+   stars:Array.from({length:18},(_,i)=>({x:300+i*105,y:220+Math.sin(i*0.8)*40})),
+   obstacles:[{x:800,w:45,h:45},{x:1500,w:45,h:45}],springs:[{x:600,w:60,h:20},{x:1200,w:60,h:20},{x:1800,w:60,h:20}],powerups:[{x:700,type:'magnet'},{x:1100,type:'shield'},{x:1700,type:'magnet'}],bubbles:[{x:500},{x:900},{x:1400},{x:1900}],boss:'🎉'},
+];
+
+const player={x:150,y:0,vy:0,w:55,h:55,onGround:false,shield:0,magnet:0};
+
+function resetLevel(){
+  const lvl=levels[currentLevel];
+  worldX=0; starsCollected=0; lives=3;
+  player.y=H-80-player.h; player.vy=0; player.onGround=true; player.shield=0; player.magnet=0;
+  lvl.stars.forEach(s=>s.got=false); lvl.powerups.forEach(p=>p.got=false);
+  if(chosenPower==='magnet')player.magnet=180;
+  if(chosenPower==='shield')player.shield=180;
+  if(chosenPower==='spring')player.vy=-16;
+  document.getElementById('levelName').textContent=lvl.name;
+  document.getElementById('need').textContent=lvl.need;
+  updateUI();
+}
+function updateUI(){document.getElementById('stars').textContent=starsCollected;document.getElementById('hearts').textContent='❤️'.repeat(lives)+'🤍'.repeat(3-lives);}
+
+function jump(){if(gameState!=='playing')return;if(player.onGround||player.y>H-200){player.vy=levels[currentLevel].gravity<0.4?-10:-13;player.onGround=false;beep(650,0.07,'square');}}
+canvas.addEventListener('mousedown',jump);canvas.addEventListener('touchstart',e=>{e.preventDefault();jump();});window.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();jump();}});
+
+function update(){
+  if(gameState!=='playing')return;
+  const lvl=levels[currentLevel];
+  worldX+=lvl.speed; player.vy+=lvl.gravity; player.y+=player.vy;
+  const groundY=H-80-player.h; if(player.y>=groundY){player.y=groundY;player.vy=0;player.onGround=true;}
+  lvl.obstacles.forEach(ob=>{const ox=ob.x-worldX;if(ox>-ob.w&&ox<player.x+player.w){if(player.x+player.w*0.7>ox&&player.x+player.w*0.3<ox+ob.w){if(player.y+player.h>H-80-ob.h&&player.y+player.h<H-60){player.y=H-80-ob.h-player.h;player.vy=0;player.onGround=true;}else if(player.y+player.h*0.7>H-80-ob.h){if(player.shield<=0){lives--;beep(180,0.18,'sawtooth');updateUI();worldX-=70;if(lives<=0){gameState='ready';showLevel();}}}}}});
+  lvl.springs.forEach(sp=>{const sx=sp.x-worldX;if(Math.abs(sx-player.x)<40&&player.y+player.h>=H-80-sp.h-5&&player.vy>0){player.vy=-18;beep(900,0.1,'triangle');player.onGround=false;}});
+  lvl.powerups.forEach(p=>{if(!p.got){const px=p.x-worldX;if(Math.abs(px-player.x)<40&&Math.abs((H-150)-player.y)<50){p.got=true;beep(1200,0.12);if(p.type==='magnet')player.magnet=180;if(p.type==='shield')player.shield=180;if(p.type==='spring')player.vy=-16;}}});
+  if(player.magnet>0)player.magnet--;if(player.shield>0)player.shield--;
+  lvl.stars.forEach(s=>{if(!s.got){const sx=s.x-worldX;let dist=Math.hypot(sx-player.x,s.y-player.y);if(player.magnet>0&&dist<130){s.x-=(s.x-worldX-player.x)*0.25;s.y+=(player.y-s.y)*0.25;dist=Math.hypot(s.x-worldX-player.x,s.y-player.y);}if(dist<38){s.got=true;starsCollected++;beep(1000+Math.random()*300,0.06);updateUI();}}});
+  lvl.bubbles.forEach((b,i)=>{b.y=200+Math.sin((worldX+b.x)/70+i)*50;const bx=b.x-worldX;if(Math.abs(bx-player.x)<30&&Math.abs(b.y-player.y)<30&&player.shield<=0&&lvl.name.includes('BOSS')){lives--;updateUI();beep(150,0.25);worldX-=50;}});
+  if(worldX>lvl.end){if(starsCollected>=lvl.need){gameState='complete';beep(800,0.09);setTimeout(()=>beep(1050,0.09),110);setTimeout(()=>beep(1300,0.15),220);stickersUnlocked[currentLevel]=true;localStorage.setItem('catStickers',JSON.stringify(stickersUnlocked));showWin();}else{worldX=lvl.end-40;}}
+}
+
+function draw(){
+  const lvl=levels[currentLevel];
+  const grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,lvl.bg1);grad.addColorStop(1,lvl.bg2);ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+  if(currentLevel===4||currentLevel===9){ctx.fillStyle='rgba(255,255,255,0.8)';for(let i=0;i<60;i++)ctx.fillRect((i*137-worldX*0.3)%W,(i*53)%280,2,2);}
+  ctx.fillStyle=lvl.ground;ctx.fillRect(0,H-80,W,80);ctx.fillStyle='rgba(255,255,255,0.25)';for(let i=0;i<25;i++)ctx.fillRect((i*180-worldX)%W-40,H-75,70,4);
+  ctx.save();ctx.translate(-worldX,0);
+  lvl.stars.forEach(s=>{if(!s.got){ctx.save();ctx.translate(s.x,s.y);ctx.rotate(Date.now()/700);ctx.fillStyle='#ffde59';ctx.beginPath();for(let i=0;i<5;i++){ctx.lineTo(Math.cos(i*1.257)*17,Math.sin(i*1.257)*17);ctx.lineTo(Math.cos(i*1.257+0.628)*8,Math.sin(i*1.257+0.628)*8);}ctx.closePath();ctx.fill();ctx.restore();}});
+  lvl.powerups.forEach(p=>{if(!p.got){ctx.font='28px sans-serif';ctx.fillText(p.type==='magnet'?'🧲':p.type==='shield'?'🛡️':'👟',p.x-14,H-110);}});
+  lvl.springs.forEach(sp=>{ctx.fillStyle='#ff6b9d';ctx.fillRect(sp.x,H-80-sp.h,sp.w,sp.h);ctx.fillStyle='white';ctx.font='14px sans-serif';ctx.fillText('弹',sp.x+sp.w/2-7,H-80-sp.h+14);});
+  lvl.obstacles.forEach(ob=>{const y=H-80-ob.h;if(ob.type==='turtle')ctx.fillText('🐢',ob.x,y+32);else if(ob.type==='crab')ctx.fillText('🦀',ob.x,y+32);else if(ob.type==='dino')ctx.fillText('🦖',ob.x,y+35);else{ctx.fillStyle='#8B4513';ctx.fillRect(ob.x,y,ob.w,ob.h);}});
+  lvl.bubbles.forEach(b=>{ctx.beginPath();ctx.arc(b.x,b.y,20,0,Math.PI*2);ctx.fillStyle=lvl.name.includes('云')?'rgba(200,230,255,0.7)':'rgba(173,216,230,0.6)';ctx.fill();ctx.strokeStyle='white';ctx.stroke();});
+  if(lvl.boss){const bx=lvl.end+70;ctx.font='70px sans-serif';ctx.fillText(lvl.boss,bx,H-95);if(lvl.boss==='🐻')ctx.fillText('Zzz',bx+10,H-165);}
+  ctx.fillStyle='#ff3b8d';ctx.fillRect(lvl.end,H-200,8,120);ctx.fillStyle='#ffde59';ctx.beginPath();ctx.moveTo(lvl.end+8,H-200);ctx.lineTo(lvl.end+55,H-180);ctx.lineTo(lvl.end+8,H-160);ctx.fill();
+  ctx.restore();
+  ctx.save();if(player.shield>0&&Math.floor(Date.now()/120)%2)ctx.globalAlpha=0.55;ctx.font='50px sans-serif';ctx.fillText(skins[selectedSkin].emoji,player.x,player.y+48);if(player.magnet>0){ctx.strokeStyle='#00e5ff';ctx.lineWidth=3;ctx.beginPath();ctx.arc(player.x+27,player.y+27,44+Math.sin(Date.now()/90)*4,0,Math.PI*2);ctx.stroke();}ctx.restore();
+  if(gameState==='complete'&&currentLevel===9){for(let i=0;i<20;i++){ctx.fillStyle=`hsl(${Date.now()/20+i*18%360},100%,60%)`;ctx.fillRect(Math.random()*W,Math.random()*H/2,4,4);}}
+}
+function loop(){update();draw();requestAnimationFrame(loop);}loop();
+
+const startScreen=document.getElementById('startScreen'),levelScreen=document.getElementById('levelScreen'),winScreen=document.getElementById('winScreen');
+function showStickers(){const box=document.getElementById('stickers');box.innerHTML='';const icons=['🐱','🍬','🌊','🐻','🚀','🐠','🦖','☁️','🏰','🌈'];icons.forEach((ic,i)=>{const d=document.createElement('div');d.className='sticker'+(stickersUnlocked[i]?'':' locked');d.textContent=ic;box.appendChild(d);});document.getElementById('progress').textContent=stickersUnlocked.filter(Boolean).length;}
+function showSkins(){const box=document.getElementById('skinSelect');box.innerHTML='';skins.forEach((s,i)=>{const unlocked=stickersUnlocked[s.need];const d=document.createElement('div');d.className='skin'+(i===selectedSkin?' active':'')+(unlocked?'':' locked');d.innerHTML=`<span>${s.emoji}</span><small>${s.name}</small>`;d.onclick=()=>{if(!unlocked){beep(200,0.1);alert('先通关第'+(s.need+1)+'关解锁！');return;}selectedSkin=i;localStorage.setItem('catSkin',i);showSkins();beep(900,0.08);};box.appendChild(d);});}
+showStickers();showSkins();
+
+document.getElementById('playBtn').onclick=()=>{startScreen.style.display='none';showLevel();};
+document.querySelectorAll('.power').forEach(p=>p.onclick=()=>{document.querySelectorAll('.power').forEach(x=>x.classList.remove('active'));p.classList.add('active');chosenPower=p.dataset.p;beep(700,0.06);});
+document.getElementById('goBtn').onclick=()=>{levelScreen.style.display='none';gameState='playing';resetLevel();};
+document.getElementById('nextBtn').onclick=()=>{winScreen.style.display='none';if(currentLevel<9){currentLevel++;showLevel();}else{alert('🏆 恭喜！你收集了全部10片彩虹！你是彩虹小猫大师！');currentLevel=0;startScreen.style.display='flex';showStickers();showSkins();}};
+
+function showLevel(){const lvl=levels[currentLevel];document.getElementById('lvlTitle').textContent=lvl.name;document.getElementById('lvlDesc').textContent=lvl.desc+` (需要${lvl.need}颗)`;levelScreen.style.display='flex';gameState='ready';}
+function showWin(){document.getElementById('winText').textContent=`第${currentLevel+1}关完成！`;document.getElementById('rewardSticker').textContent=['🐱','🍬','🌊','🐻','🚀','🐠','🦖','☁️','🏰','🌈'][currentLevel];const skinUnlock=skins.find(s=>s.need===currentLevel);document.getElementById('unlockSkin').textContent=skinUnlock?`解锁新皮肤：${skinUnlock.emoji} ${skinUnlock.name}！`:'';winScreen.style.display='flex';showStickers();}
+document.body.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a0672f3bcdba3d21',t:'MTc4MDU3ODY5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

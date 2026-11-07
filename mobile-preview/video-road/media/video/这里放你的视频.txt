@@ -1,0 +1,1 @@
+把自己的 mp4 文件复制到这个文件夹，打开 content/works.js，把 file 填成 media/video/文件名.mp4。

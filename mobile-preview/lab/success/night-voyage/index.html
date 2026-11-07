@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#080f18"><title>夜航 · 十境迷宫 | 3D 沉浸版 V0.7</title>
+<style>
+:root{color-scheme:dark;--accent:#e5bd80;--accent2:#a37542}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:#ede8e2;background:radial-gradient(ellipse at 50% -15%,#26394d 0,#101723 38%,#06090f 85%);font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif}
+button{font:inherit;cursor:pointer;touch-action:none}
+#game{max-width:1420px;padding:15px 16px 22px;margin:0 auto}
+.mast{display:flex;gap:15px;align-items:flex-end;justify-content:space-between;margin-bottom:13px}
+.micro{font-size:10px;letter-spacing:.21em;color:var(--accent);font-weight:800}
+.mast h1{font:600 clamp(23px,4.4vw,36px)/1.2 Georgia,"Noto Serif SC",serif;letter-spacing:.13em;margin:8px 0 5px}
+.mast .lead{font-size:12px;color:#b1bac3;margin:0;line-height:1.7}
+.progress{display:flex;gap:7px;align-items:center;padding-bottom:4px}
+.progress button{border:1px solid #59616a;background:#18222a;border-radius:50%;width:30px;height:30px;min-width:30px;padding:0;font-size:11px;color:#9ba8af;transition:all .2s}
+.progress button.current{background:var(--accent);color:#182027;border-color:#ffe7ac;font-weight:800;box-shadow:0 0 14px color-mix(in srgb,var(--accent) 36%,transparent)}
+.progress button.passed{border-color:var(--accent);color:var(--accent)}
+.progress button:disabled{opacity:.38;cursor:not-allowed}
+.card{border-radius:16px;overflow:hidden;background:#090e18;border:1px solid #3d5262;box-shadow:0 26px 70px #0009;position:relative;isolation:isolate}
+.viewport{position:relative;aspect-ratio:16/9;outline:none;overflow:hidden;touch-action:none;cursor:grab;user-select:none;background:#04070d}
+.viewport:active{cursor:grabbing}
+.viewport:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+canvas#world{display:block;width:100%;height:100%}
+.vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 41%,#02050d88 100%);z-index:3}
+.cross{position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:#fff9e8cc;box-shadow:0 0 7px #000d;pointer-events:none;z-index:4}
+.fullscreen-btn{position:absolute;z-index:7;right:13px;top:13px;min-height:37px;padding:8px 12px;border-radius:9px;border:1px solid #e1c58caa;background:#101d2ce6;color:#ffecbd;font-weight:700;font-size:12px;box-shadow:0 5px 18px #0009;backdrop-filter:blur(8px)}
+.fullscreen-btn:hover{background:#344255}
+.snd-btn{position:absolute;z-index:7;right:13px;top:58px;width:40px;height:37px;border-radius:9px;border:1px solid #e1c58c88;background:#101d2ce6;color:#ffecbd;font-size:15px;box-shadow:0 5px 18px #0009;backdrop-filter:blur(8px)}
+.snd-btn:hover{background:#344255}
+.snd-btn.off{opacity:.55;text-decoration:line-through}
+.hudtop{position:absolute;inset:0 0 auto;padding:13px 150px 40px 16px;display:flex;justify-content:space-between;align-items:flex-start;gap:6px;background:linear-gradient(#060a12e6,#060a1200);pointer-events:none;z-index:4}
+.room{font-size:11px;letter-spacing:.18em;color:var(--accent);font-weight:800}
+.goal{font-size:15px;font-weight:700;color:#f4eee2;margin-top:4px;text-shadow:0 2px 10px #000}
+.sub{font-size:10px;color:#aab6bf;margin-top:3px}
+.statline{text-align:right;font-size:11px;color:#cdd6dc;background:#0a1420b8;border:1px solid #3c4d5a;border-radius:9px;padding:6px 9px;backdrop-filter:blur(6px);line-height:1.6}
+.relicbar{display:flex;gap:4px;justify-content:flex-end;margin-top:5px}
+.relicbar span{width:18px;height:18px;border-radius:50%;border:1px solid #4a5a64;font-size:10px;display:flex;align-items:center;justify-content:center;color:#5c6a74;background:#0c1620aa;transition:all .4s}
+.relicbar span.owned{color:#1d1508;background:linear-gradient(180deg,#f0cf8f,#cfa25c);border-color:#ffe7ac;box-shadow:0 0 9px #e5bd8077;font-weight:800}
+.mapbox{position:absolute;top:66px;right:14px;z-index:6;padding:10px;border-radius:12px;background:#08131de6;border:1px solid #4a5c68;backdrop-filter:blur(10px);display:none;box-shadow:0 12px 34px #000a}
+.mapbox.open{display:block}
+.mapbox canvas{display:block;width:180px;height:180px;image-rendering:pixelated;border-radius:6px}
+.mhead,.mfoot{display:flex;justify-content:space-between;font-size:9px;color:#93a3ad;letter-spacing:.08em;padding:4px 1px}
+.hudbottom{position:absolute;inset:auto 0 0;padding:38px 16px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:8px;background:linear-gradient(transparent,#04070cd9);pointer-events:none;z-index:4}
+.near{font-size:12px;color:#e8e2d5;text-shadow:0 1px 8px #000}
+.near small{display:block;color:#9aa7b0;font-size:10px;margin-top:3px}
+.compass{font-size:11px;color:var(--accent);letter-spacing:.12em;white-space:nowrap;text-shadow:0 1px 8px #000}
+.note{position:absolute;left:50%;bottom:92px;transform:translate(-50%,10px);z-index:7;max-width:82%;padding:9px 18px;border-radius:999px;background:#0b1622e6;border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);color:#f2e7cf;font-size:12px;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;text-align:center;box-shadow:0 8px 26px #000a}
+.note.show{opacity:1;transform:translate(-50%,0)}
+.result{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(4,8,14,.62);backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .5s;z-index:8}
+.result.show{opacity:1;pointer-events:auto}
+.result .panel{max-width:560px;margin:10px;padding:32px 40px;text-align:center;border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);border-radius:18px;background:linear-gradient(180deg,#0d1622ee,#070c14f4);box-shadow:0 30px 80px #000c}
+.symbol{color:var(--accent);font-size:26px;text-shadow:0 0 18px color-mix(in srgb,var(--accent) 70%,transparent)}
+.chapter{font-size:10px;letter-spacing:.28em;color:#9aa7b0;margin-top:8px}
+.result h2{font:600 clamp(22px,3vw,32px)/1.3 Georgia,"Noto Serif SC",serif;color:#f3e9d4;margin:10px 0 6px}
+.result blockquote{font:600 clamp(17px,2.2vw,24px)/1.6 Georgia,"Noto Serif SC",serif;color:var(--accent);margin:14px 0 6px}
+.result p{font-size:13px;color:#c3ccd3;line-height:1.9;margin:10px 0}
+.resultStat{font-size:11px;color:#8d99a3;margin:12px 0 18px}
+.bar{position:absolute;left:0;right:0;height:0;background:#010306;z-index:6;transition:height 1.1s cubic-bezier(.72,0,.28,1);pointer-events:none}
+.bar.top{top:0}.bar.bottom{bottom:0}
+.card.cine .bar{height:7.5%}
+.fade{position:absolute;inset:0;background:#01040a;opacity:0;transition:opacity 1.25s ease;pointer-events:none;z-index:9}
+.fade.on{opacity:1;transition:opacity .3s ease}
+.gflash{position:absolute;inset:0;background:radial-gradient(ellipse at center,#ffe9b8e0,#e5bd8000 72%);opacity:0;pointer-events:none;z-index:8;transition:opacity .9s ease}
+.gflash.red{background:radial-gradient(ellipse at center,#ff2a1ad8,#6e0a0400 70%)}
+.gflash.on{opacity:1;transition:opacity .06s ease}
+#clock.danger{color:#ff6a5a;font-weight:800;animation:ckp 1s steps(2) infinite}
+@keyframes ckp{50%{opacity:.4}}
+#wardCount{color:#ffd98a}
+.bpulse{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:0;box-shadow:inset 0 0 90px 26px rgba(255,206,120,.55);transition:opacity .12s}
+.cue{position:absolute;top:50%;z-index:5;color:var(--accent);font-size:22px;text-shadow:0 0 12px color-mix(in srgb,var(--accent) 80%,transparent);pointer-events:none;opacity:0;transition:opacity .3s;animation:cuep 1.1s ease-in-out infinite}
+.cue.l{left:14px;transform:rotate(180deg)}
+.cue.r{right:14px}
+@keyframes cuep{0%,100%{margin-top:-14px}50%{margin-top:-6px}}
+#intro{position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 32%,#16273ad2,#050a12f0);backdrop-filter:blur(7px);transition:opacity .9s}
+#intro.hide{opacity:0;pointer-events:none}
+#intro .in-panel{text-align:center;padding:24px;max-width:560px}
+#intro .in-micro{font-size:10px;letter-spacing:.34em;color:var(--accent);font-weight:800}
+#intro h3{font:600 clamp(26px,4.4vw,42px)/1.3 Georgia,"Noto Serif SC",serif;letter-spacing:.22em;color:#f3e7cd;margin:12px 0 4px;text-shadow:0 0 34px color-mix(in srgb,var(--accent) 30%,transparent)}
+#intro p{font-size:12px;color:#aeb9c2;line-height:2.1;margin:14px 0 24px}
+#intro b{color:#e9ddc2;font-weight:700}
+.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 6px 0}
+.how{font-size:11px;color:#8d9aa4;line-height:1.7}
+.how b{color:#cfd8de}
+.dpad{display:none;gap:4px}
+@media(pointer:coarse){.dpad{display:flex}}
+.actions{display:flex;gap:8px}
+.btn{border:1px solid #5a6670;background:#16222c;color:#dfe6ea;border-radius:10px;padding:9px 14px;font-size:12px;min-height:44px;transition:background .18s,border-color .18s,filter .18s}
+.btn:hover{background:#24384a;border-color:#8fa0ab}
+.btn.gold{background:linear-gradient(180deg,#f0cf8f,#cfa25c);color:#241a0c;border-color:#ffe7ac;font-weight:800}
+.btn.gold:hover{filter:brightness(1.09)}
+.footer{display:flex;justify-content:space-between;align-items:center;padding:10px 4px 0;font-size:11px;color:#7e8b94}
+.stamp{letter-spacing:.3em;font-size:9px;color:#5d6a73}
+.card:fullscreen,.card:-webkit-full-screen,.card.immersive-fallback{position:fixed;inset:0;width:100vw;height:100vh;height:100dvh;max-height:100dvh;display:block;border:none;border-radius:0;background:#03070e;z-index:9999;overflow:hidden;margin:0;box-shadow:none}
+.card:fullscreen .viewport,.card:-webkit-full-screen .viewport,.card.immersive-fallback .viewport{position:absolute;inset:0;width:100%;height:100%;aspect-ratio:auto;cursor:grab}
+.card:fullscreen .toolbar,.card:-webkit-full-screen .toolbar,.card.immersive-fallback .toolbar{position:absolute;z-index:9;left:50%;bottom:max(13px,env(safe-area-inset-bottom));transform:translateX(-50%);width:max-content;max-width:calc(100% - 30px);min-height:0;padding:9px 13px;border:1px solid #89949b8a;border-radius:13px;background:#07121dd9;box-shadow:0 8px 28px #000b;backdrop-filter:blur(16px)}
+.card:fullscreen .hudtop,.card:-webkit-full-screen .hudtop,.card.immersive-fallback .hudtop{padding-top:23px;padding-left:28px;padding-right:175px}
+.card:fullscreen .hudtop .room,.card:-webkit-full-screen .hudtop .room,.card.immersive-fallback .hudtop .room{font-size:13px}
+.card:fullscreen .hudtop .goal,.card:-webkit-full-screen .hudtop .goal,.card.immersive-fallback .hudtop .goal{font-size:17px}
+.card:fullscreen .hudbottom,.card:-webkit-full-screen .hudbottom,.card.immersive-fallback .hudbottom{bottom:68px;padding-left:27px;padding-right:27px}
+.card:fullscreen .hudbottom .near,.card:-webkit-full-screen .hudbottom .near,.card.immersive-fallback .hudbottom .near{font-size:14px}
+.card:fullscreen .result .panel,.card:-webkit-full-screen .result .panel,.card.immersive-fallback .result .panel{max-width:690px}
+.card:fullscreen .result h2,.card:-webkit-full-screen .result h2,.card.immersive-fallback .result h2{font-size:clamp(23px,3vw,40px)}
+.card:fullscreen .result blockquote,.card:-webkit-full-screen .result blockquote,.card.immersive-fallback .result blockquote{font-size:clamp(19px,2.6vw,30px)}
+.card:fullscreen .result p,.card:-webkit-full-screen .result p,.card.immersive-fallback .result p{font-size:clamp(12px,1.3vw,17px)}
+body:has(.immersive-fallback){overflow:hidden}
+@media(max-width:650px){
+ #game{padding:12px 8px 22px}.mast{align-items:center}.mast h1{font-size:24px}.micro{font-size:8px}.mast .lead{font-size:10px}
+ .progress{gap:4px}.progress button{width:26px;min-width:26px;height:26px;font-size:10px}
+ .viewport{aspect-ratio:5/4}
+ .fullscreen-btn{top:8px;right:8px;min-height:32px;font-size:11px;padding:6px 8px}
+ .snd-btn{top:46px;right:8px;width:34px;height:32px;font-size:13px}
+ .hudtop{padding:10px 95px 27px 10px}
+ .hudtop .room{font-size:10px}.hudtop .goal{font-size:11px;margin-top:5px}.hudtop .sub{font-size:9px}
+ .statline{font-size:9px;padding:5px}
+ .mapbox{top:57px;right:6px;padding:7px}.mapbox canvas{width:140px;height:140px}
+ .hudbottom{padding:30px 9px 8px}.hudbottom .near{font-size:10px}.near small{font-size:9px}
+ .toolbar{padding:8px;gap:6px;flex-wrap:wrap}.how{order:2;flex-basis:100%;font-size:10px}
+ .dpad{display:flex}.dpad .btn{width:36px;min-width:36px;height:40px}
+ .actions{flex:1;gap:5px}.actions .btn{padding:6px 8px;font-size:10px;min-height:40px}
+ .footer{font-size:10px}.stamp{display:none}
+ .result .panel{padding:16px 12px}.result h2{margin:7px 0}.result blockquote{font-size:18px}.result p{font-size:11px;margin:8px 0}.result .resultStat{font-size:10px}.result .btn{font-size:11px}
+ #intro p{font-size:10px}
+ .card:fullscreen .hudtop,.card:-webkit-full-screen .hudtop,.card.immersive-fallback .hudtop{padding:10px 93px 20px 12px}
+ .card:fullscreen .hudtop .room,.card:-webkit-full-screen .hudtop .room,.card.immersive-fallback .hudtop .room{font-size:10px}
+ .card:fullscreen .hudtop .goal,.card:-webkit-full-screen .hudtop .goal,.card.immersive-fallback .hudtop .goal{font-size:12px}
+ .card:fullscreen .hudbottom,.card:-webkit-full-screen .hudbottom,.card.immersive-fallback .hudbottom{bottom:105px;padding:28px 11px 8px}
+ .card:fullscreen .hudbottom .near,.card:-webkit-full-screen .hudbottom .near,.card.immersive-fallback .hudbottom .near{font-size:11px}
+ .card:fullscreen .toolbar,.card:-webkit-full-screen .toolbar,.card.immersive-fallback .toolbar{bottom:max(6px,env(safe-area-inset-bottom));max-width:calc(100% - 12px);width:calc(100% - 12px);padding:7px 6px;gap:5px;justify-content:center}
+ .card:fullscreen .toolbar .how,.card:-webkit-full-screen .toolbar .how,.card.immersive-fallback .toolbar .how{display:none}
+ .card:fullscreen .toolbar .dpad,.card:-webkit-full-screen .toolbar .dpad,.card.immersive-fallback .toolbar .dpad{display:flex}
+ .card:fullscreen .toolbar .dpad .btn,.card:-webkit-full-screen .toolbar .dpad .btn,.card.immersive-fallback .toolbar .dpad .btn{width:34px;min-width:34px;height:45px}
+ .card:fullscreen .actions,.card:-webkit-full-screen .actions,.card.immersive-fallback .actions{flex:0 0 auto}
+ .card:fullscreen .actions .btn,.card:-webkit-full-screen .actions .btn,.card.immersive-fallback .actions .btn{font-size:10px;min-height:43px;padding:6px 7px}
+ .card:fullscreen .result .panel,.card:-webkit-full-screen .result .panel,.card.immersive-fallback .result .panel{max-height:86%;overflow:auto}
+}
+</style></head><body><main id="game">
+<header class="mast"><div><div class="micro">THE MIDNIGHT ARCHIVE · 3D IMMERSIVE EDITION</div><h1>夜航 · 十境迷宫</h1><p class="lead" id="topLead">走过十个不同世界，收集十种关于人生的答案。</p></div><nav class="progress" id="progress" aria-label="选择已解锁的关卡"></nav></header>
+<section class="card" id="stageCard"><div class="viewport" id="view" tabindex="0" aria-label="第一人称三维迷宫：键盘 WASD 移动，鼠标观察四周"><canvas id="world"></canvas><div class="vignette"></div><div class="bpulse" id="bpulse"></div><div class="cross"></div><div class="bar top"></div><div class="bar bottom"></div><button type="button" class="fullscreen-btn" id="fullBtn" aria-pressed="false" title="全屏探索（快捷键 F）">⛶ 全屏探索</button><button type="button" class="snd-btn" id="sndBtn" aria-pressed="true" title="环境音开关">🔊</button>
+<div class="hudtop"><div><div class="room" id="roomTitle">第一境 · 藏书回廊</div><div class="goal" id="goal">寻找阴阳双符</div><div class="sub" id="goalSub">双符合璧，开启书廊尽头的门</div></div><div><div class="statline"><b id="clock">00:00</b><br><span id="percent">已探索 0%</span><br><span id="wardCount" hidden>符箓 ×0</span></div><div class="relicbar" id="relicBar"></div></div></div>
+<div class="mapbox" id="mapbox"><div class="mhead"><span>逐步揭开的探索地图</span><span>↑ 北</span></div><canvas width="180" height="180" id="map"></canvas><div class="mfoot">金色箭头是你，彩色标记是已发现线索</div></div><div class="hudbottom"><div class="near" id="near">沿着道路寻找线索<small>WASD 移动 · 点击画面锁定视角</small></div><div class="compass" id="compass">◈ 北</div></div><div class="note" id="notice" aria-live="polite"></div>
+<div class="result" id="result"><div class="panel"><div class="symbol">✦</div><div class="chapter" id="resultChapter">CHAPTER COMPLETE</div><h2 id="resultTitle">通关</h2><blockquote id="quote"></blockquote><p id="reflection"></p><div class="resultStat" id="resultStat"></div><button class="btn gold" id="next">走进下一境 →</button></div></div>
+<div id="intro"><div class="in-panel"><div class="in-micro">THE MIDNIGHT ARCHIVE · TEN REALMS · 3D</div><h3>夜航 · 十境迷宫</h3><p>第一人称穿行十个三维世界：前五境是书廊、雨城、深海、竹林、星穹；<br>后五境里，<b>噬影者</b>在黑暗中游荡——被追上就会被拖回入口。<br>拾起<b>闪光符箓</b>（按 Q 释放）可以定住逼近的它；迷宫里的<b>宝箱</b>藏着补给。<br>最终的「无间时廊」沙漏倒转——你只有 <b>180 秒</b>。<br>每境深处藏有<b>遗物</b>与<b>半幅残图</b>，墙根下还藏着可以扳动的<b>暗门机关</b>。<br><b>WASD</b> 行走 · <b>点击画面</b>锁定视角 · <b>E</b> 调查 · <b>Q</b> 符箓 · <b>M</b> 地图 · <b>H</b> 指路<br>建议佩戴耳机 —— 风雨与星空是路标，噬影者逼近时的心跳也是。</p><button class="btn gold" id="startBtn">点 燃 灯 笼 · 开 始 旅 程</button></div></div>
+<div class="fade on" id="fade"></div><div class="gflash" id="gflash"></div></div>
+<div class="toolbar"><div class="how">电脑：<b>WASD</b> 行走 · <b>点击画面</b>锁定鼠标视角（Esc 释放）· <b>E</b> 互动 · <b>Q</b> 符箓 · <b>F</b> 全屏<br>手机：按住方向键移动，拖动画面转向</div><div class="dpad"><button class="btn" data-control="turnL" aria-label="左转">↶</button><button class="btn" data-control="forward" aria-label="前进">↑</button><button class="btn" data-control="backward" aria-label="后退">↓</button><button class="btn" data-control="turnR" aria-label="右转">↷</button></div><div class="actions"><button class="btn" id="wardBtn">符箓 Q</button><button class="btn" id="mapBtn">地图 M</button><button class="btn" id="hintBtn">指路 H</button><button class="btn gold" id="actBtn">调查 E</button></div></div></section>
+<footer class="footer"><div><strong id="footerTask">旅程 01 / 10</strong> · <span id="footerDesc">不是所有的路都通向同一个答案。</span></div><div class="stamp">TEN REALMS · 3D IMMERSIVE EDITION</div></footer></main>
+<script type="importmap">{"imports":{"three":"./lib/three.module.min.js"}}</script>
+<script type="module" src="./main.js"></script></html>

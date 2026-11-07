@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>长期思考与机会画板</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#f8fafc;overflow:hidden}
+.toolbar{position:absolute;top:20px;left:20px;z-index:10;background:white;padding:12px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);display:flex;gap:8px}
+.toolbar button,.toolbar label{padding:8px 14px;cursor:pointer;border-radius:6px;border:1px solid #e2e8f0;background:white;font-weight:600;font-size:13px;transition:all 0.2s;display:inline-flex;align-items:center}
+.toolbar button:hover,.toolbar label:hover{background:#f1f5f9}
+.toolbar .primary{background:#0f172a;color:white;border-color:#0f172a}
+.toolbar .primary:hover{background:#1e293b}
+.toolbar .tool-btn{background:#3b82f6;color:white;border-color:#3b82f6}
+.toolbar .tool-btn:hover{background:#2563eb}
+#fileInput{display:none}
+#canvas{width:100vw;height:100vh;position:relative;background-image:radial-gradient(#cbd5e1 1px,transparent 1px);background-size:24px 24px}
+.node{position:absolute;width:260px;border-radius:10px;border:1px solid #e2e8f0;background:white;box-shadow:0 4px 6px rgba(0,0,0,0.05);user-select:none;z-index:5;transition:box-shadow 0.2s;display:flex;flex-direction:column}
+.node:hover{box-shadow:0 10px 15px rgba(0,0,0,0.1)}
+.node:active{cursor:grabbing}
+.node.tool-node{background:#1e293b;border-color:#334155;color:#f8fafc}
+.node.tool-node .node-header{border-bottom-color:#334155}
+.node.tool-node .node-title{color:#f8fafc}
+.node.tool-node textarea{background:#334155;color:#f8fafc}
+.node.tool-node textarea:focus{background:#475569}
+.node.tool-node label{color:#94a3b8}
+.node.sticky-note{background:#fef9c3;border-color:#fde047;width:200px;min-height:60px;box-shadow:2px 2px 5px rgba(0,0,0,0.1)}
+.node.sticky-note .node-body{padding:10px}
+.node.sticky-note textarea{width:100%;border:none;background:transparent;resize:none;outline:none;font-size:14px;font-family:inherit;color:#713f12;min-height:40px}
+.node.sticky-note .node-delete{position:absolute;top:5px;right:10px;color:#ca8a04}
+.node.sticky-note .node-delete:hover{color:#ef4444}
+.node.sticky-note .convert-btn{font-size:11px;color:#ca8a04;cursor:pointer;margin-top:5px;text-align:right}
+.node.sticky-note .convert-btn:hover{color:#b45309;text-decoration:underline}
+.node-header{padding:10px 12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;cursor:grab}
+.node-title{font-weight:700;font-size:14px;color:#0f172a;outline:none;flex:1}
+.node-delete{color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;margin-left:8px}
+.node-delete:hover{color:#ef4444}
+.status-badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;cursor:pointer}
+.status-idea{background:#f1f5f9;color:#475569}
+.status-pending{background:#fef3c7;color:#b45309}
+.status-blocked{background:#fee2e2;color:#b91c1c}
+.status-verified{background:#d1fae5;color:#047857}
+.status-executing{background:#dbeafe;color:#1d4ed8}
+.node-body{padding:12px;display:flex;flex-direction:column;gap:8px}
+.node-field{display:flex;flex-direction:column;gap:4px}
+.node-field label{font-size:11px;color:#64748b;font-weight:600;text-transform:uppercase}
+.node-field textarea{border:none;background:#f8fafc;border-radius:6px;padding:8px;font-size:13px;resize:none;outline:none;font-family:inherit;min-height:40px}
+.handle{position:absolute;width:10px;height:10px;background:#cbd5e1;border-radius:50%;opacity:0;transition:opacity 0.2s;cursor:crosshair;z-index:10}
+.node:hover .handle{opacity:1}
+.handle-out{right:-5px;top:50%;margin-top:-5px;background:#3b82f6}
+.handle-in{left:-5px;top:50%;margin-top:-5px;background:#10b981}
+#lines-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.edge{stroke:#94a3b8;stroke-width:2;fill:none;marker-end:url(#arrowhead);pointer-events:stroke;cursor:pointer}
+.edge:hover{stroke:#ef4444;stroke-width:3}
+</style>
+</head>
+<body>
+<div class="toolbar">
+<button class="primary" id="addIdeaBtn">+ 记录新想法</button>
+<button class="tool-btn" id="addToolBtn">+ 接入工具</button>
+<button id="exportBtn">导出 JSON</button>
+<label for="fileInput">导入 JSON</label>
+<input type="file" id="fileInput" accept=".json"/>
+</div>
+<div id="canvas">
+<svg id="lines-svg"><defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0,10 3,0 6" fill="#94a3b8"/></marker></defs></svg>
+</div>
+<script>
+const canvas=document.getElementById('canvas'),svg=document.getElementById('lines-svg');
+let nodes=JSON.parse(localStorage.getItem('board_nodes'))||[];
+let edges=JSON.parse(localStorage.getItem('board_edges'))||[];
+let draggingNode=null,dragOffset={x:0,y:0},isConnecting=false,connectionSourceId=null,tempLine=null;
+const statuses=[{key:'idea',label:'想法',class:'status-idea'},{key:'pending',label:'待验证',class:'status-pending'},{key:'blocked',label:'条件不足',class:'status-blocked'},{key:'verified',label:'已验证可行',class:'status-verified'},{key:'executing',label:'已进入执行',class:'status-executing'}];
+function saveData(){localStorage.setItem('board_nodes',JSON.stringify(nodes));localStorage.setItem('board_edges',JSON.stringify(edges));}
+window.onload=()=>{nodes.forEach(n=>renderNode(n));updateEdges();};
+document.getElementById('addIdeaBtn').addEventListener('click',()=>{const d={id:'node-'+Date.now(),type:'idea',x:Math.random()*(window.innerWidth-300)+50,y:Math.random()*(window.innerHeight-300)+50,title:'未命名想法',status:'idea',blocker:'',restart:''};nodes.push(d);renderNode(d);saveData();});
+document.getElementById('addToolBtn').addEventListener('click',()=>{const d={id:'node-'+Date.now(),type:'tool',x:Math.random()*(window.innerWidth-300)+50,y:Math.random()*(window.innerHeight-300)+50,title:'新工具/API',endpoint:'',desc:''};nodes.push(d);renderNode(d);saveData();});
+function getStatusClass(k){return(statuses.find(s=>s.key===k)||{}).class||'';}
+function getStatusText(k){return(statuses.find(s=>s.key===k)||{}).label||'想法';}
+function renderNode(node){
+const el=document.createElement('div');el.id=node.id;
+let tc=node.type==='tool'?'tool-node':node.type==='sticky'?'sticky-note':'';
+el.className='node '+tc;el.style.left=node.x+'px';el.style.top=node.y+'px';
+let bh='';
+if(node.type==='idea')bh='<div class="node-field"><label>当时卡点 / 缺什么</label><textarea placeholder="例如：缺低成本动画接口...">'+node.blocker+'</textarea></div><div class="node-field"><label>重新启动条件</label><textarea placeholder="例如：出现稳定的局部动画工具...">'+node.restart+'</textarea></div>';
+else if(node.type==='tool')bh='<div class="node-field"><label>接口地址 / 文档</label><textarea placeholder="https://... (请勿填密钥)">'+node.endpoint+'</textarea></div><div class="node-field"><label>工具能力描述</label><textarea placeholder="这个工具能做什么？">'+node.desc+'</textarea></div>';
+else if(node.type==='sticky')bh='<textarea placeholder="随手记点什么...">'+(node.content||'')+'</textarea><div class="convert-btn">转为正式想法 →</div>';
+let hh='';
+if(node.type!=='sticky'){hh='<div class="node-header"><div class="node-title" contenteditable="true">'+node.title+'</div>';if(node.type==='idea')hh+='<div class="status-badge '+getStatusClass(node.status)+'" title="点击切换状态">'+getStatusText(node.status)+'</div>';hh+='<div class="node-delete">×</div></div>';}
+else hh='<div class="node-delete">×</div>';
+let hdh=node.type!=='sticky'?'<div class="handle handle-in" data-handle="in"></div><div class="handle handle-out" data-handle="out"></div>':'';
+el.innerHTML=hh+'<div class="node-body">'+bh+'</div>'+hdh;
+canvas.appendChild(el);
+const header=el.querySelector('.node-header'),titleEl=el.querySelector('.node-title'),statusEl=el.querySelector('.status-badge'),deleteEl=el.querySelector('.node-delete'),textareas=el.querySelectorAll('textarea'),convertBtn=el.querySelector('.convert-btn');
+const dragTarget=header||el;
+dragTarget.addEventListener('mousedown',(e)=>{if(e.target.tagName==='TEXTAREA')return;if(e.target===titleEl||e.target===statusEl||e.target===deleteEl||e.target===convertBtn)return;draggingNode={el,data:node};dragOffset.x=e.clientX-node.x;dragOffset.y=e.clientY-node.y;});
+if(titleEl)titleEl.addEventListener('input',(e)=>{node.title=e.target.innerText;saveData();});
+if(statusEl)statusEl.addEventListener('click',()=>{let i=statuses.findIndex(s=>s.key===node.status);i=(i+1)%statuses.length;node.status=statuses[i].key;statusEl.className='status-badge '+statuses[i].class;statusEl.innerText=statuses[i].label;saveData();});
+deleteEl.addEventListener('click',()=>{nodes=nodes.filter(n=>n.id!==node.id);edges=edges.filter(e=>e.source!==node.id&&e.target!==node.id);el.remove();updateEdges();saveData();});
+if(node.type==='idea'){textareas[0].addEventListener('input',(e)=>{node.blocker=e.target.value;saveData();});textareas[1].addEventListener('input',(e)=>{node.restart=e.target.value;saveData();});}
+else if(node.type==='tool'){textareas[0].addEventListener('input',(e)=>{node.endpoint=e.target.value;saveData();});textareas[1].addEventListener('input',(e)=>{node.desc=e.target.value;saveData();});}
+else if(node.type==='sticky'){textareas[0].addEventListener('input',(e)=>{node.content=e.target.value;saveData();});}
+if(convertBtn)convertBtn.addEventListener('click',()=>{node.type='idea';node.title='从便签转换的想法';node.status='idea';node.blocker=node.content||'';node.restart='';el.remove();renderNode(node);saveData();});
+}
+canvas.addEventListener('dblclick',(e)=>{if(e.target!==canvas&&e.target!==svg)return;const d={id:'node-'+Date.now(),type:'sticky',x:e.clientX-100,y:e.clientY-30,content:''};nodes.push(d);renderNode(d);saveData();setTimeout(()=>{const el=document.getElementById(d.id);if(el)el.querySelector('textarea').focus();},50);});
+window.addEventListener('mousedown',(e)=>{if(e.target.classList.contains('handle-out')){e.stopPropagation();isConnecting=true;connectionSourceId=e.target.closest('.node').id;tempLine=document.createElementNS("http://www.w3.org/2000/svg","line");tempLine.setAttribute('stroke','#3b82f6');tempLine.setAttribute('stroke-width','2');tempLine.setAttribute('stroke-dasharray','5,5');svg.appendChild(tempLine);}});
+window.addEventListener('mousemove',(e)=>{if(draggingNode){const x=e.clientX-dragOffset.x,y=e.clientY-dragOffset.y;draggingNode.el.style.left=x+'px';draggingNode.el.style.top=y+'px';draggingNode.data.x=x;draggingNode.data.y=y;updateEdges();}if(isConnecting&&tempLine){const sn=nodes.find(n=>n.id===connectionSourceId);tempLine.setAttribute('x1',sn.x+260);tempLine.setAttribute('y1',sn.y+60);tempLine.setAttribute('x2',e.clientX);tempLine.setAttribute('y2',e.clientY);}});
+window.addEventListener('mouseup',(e)=>{if(draggingNode)saveData();draggingNode=null;if(isConnecting){if(e.target.classList.contains('handle-in')){const tid=e.target.closest('.node').id;if(tid!==connectionSourceId&&!edges.some(ed=>ed.source===connectionSourceId&&ed.target===tid)){const sn=nodes.find(n=>n.id===connectionSourceId),tn=nodes.find(n=>n.id===tid);let logic='';if(sn.type==='idea'&&tn.type==='tool')logic=prompt('工具 ['+tn.title+'] 接入想法 ['+sn.title+']。\n请简述这个工具如何解决之前的卡点？')||'';edges.push({source:connectionSourceId,target:tid,logic:logic,status:'theoretical',verified:false});updateEdges();saveData();}}if(tempLine)tempLine.remove();isConnecting=false;tempLine=null;}});
+function updateEdges(){svg.querySelectorAll('.edge').forEach(l=>l.remove());edges.forEach((edge,idx)=>{const s=nodes.find(n=>n.id===edge.source),t=nodes.find(n=>n.id===edge.target);if(!s||!t)return;const line=document.createElementNS("http://www.w3.org/2000/svg","line");line.classList.add('edge');line.setAttribute('x1',s.x+260);line.setAttribute('y1',s.y+60);line.setAttribute('x2',t.x);line.setAttribute('y2',t.y+60);line.addEventListener('click',()=>{edges.splice(idx,1);updateEdges();saveData();});svg.appendChild(line);});}
+document.getElementById('exportBtn').addEventListener('click',()=>{const blob=new Blob([JSON.stringify({nodes,edges},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='thought-workspace.json';a.click();URL.revokeObjectURL(url);});
+document.getElementById('fileInput').addEventListener('change',(e)=>{const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=(evt)=>{try{const data=JSON.parse(evt.target.result);nodes=data.nodes||[];edges=data.edges||[];saveData();location.reload();}catch(err){alert('JSON 解析失败：'+err.message);}};reader.readAsText(file);});
+</script>
+</body>
+</html>

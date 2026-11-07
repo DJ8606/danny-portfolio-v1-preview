@@ -1,0 +1,37 @@
+{
+  "canvas": {
+    "width": 1600,
+    "height": 900
+  },
+  "source_panorama": "assets/cinematic_world_v08.webp",
+  "transition_zones": [
+    {
+      "id": "warm-valley-to-forest",
+      "scene_boundary_x": 6032,
+      "asset": "assets/transition_forest_native.png",
+      "asset_world_left_x": 5875,
+      "asset_width": 510,
+      "asset_canvas_y": -60,
+      "asset_height": 1020,
+      "trunk_axis_world_x": 6032,
+      "trunk_axis_source_x": 6486,
+      "source_crop_xyxy": [
+        6360,
+        0,
+        6770,
+        704
+      ],
+      "design": "Only actual warm-to-cool forest join, using native pine tree barks and branches. Two measured bark axes at x=6032 and ≈6201. No masks in other scenery.",
+      "verified_overlap_range_x": [
+        5990,
+        6240
+      ]
+    }
+  ],
+  "removed_misplaced_zones": [
+    3380,
+    5900,
+    6900
+  ],
+  "style_qa": "Derived from same original panorama; no separately generated mismatched style"
+}

@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>全栈排错特工 · v0.3 第一天</title>
+<style>
+:root{
+  --ink:#27231d;--paper:#f3e5c2;--paper2:#e3cea1;--cream:#fff7df;--teal:#315f5a;
+  --green:#5f7f59;--brick:#9b513d;--amber:#e9bd55;--muted:#746858;--shadow:#171512;
+  --sky:#b9d3c3;--road:#bba37b;--blue:#58778b;--red:#a55442;
+}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#cdbb92;color:var(--ink);font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif}
+button{font:inherit;color:inherit}
+button:focus-visible,.clickable:focus-visible{outline:4px solid #fff;outline-offset:3px}
+img{user-select:none;-webkit-user-drag:none}
+.pixel{image-rendering:pixelated}
+.screen{position:fixed;inset:0;display:none;overflow:hidden}
+.screen.active{display:block}
+.btn{border:3px solid var(--ink);background:var(--cream);box-shadow:4px 4px 0 var(--shadow);padding:9px 14px;font-weight:900;cursor:pointer;transition:transform .1s,box-shadow .1s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--shadow)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--shadow)}
+.btn.primary{background:var(--teal);color:#fff}
+.btn.amber{background:var(--amber)}
+.btn.brick{background:var(--brick);color:#fff}
+.btn.ghost{background:rgba(255,247,223,.72)}
+.btn.small{padding:6px 9px;font-size:12px;box-shadow:3px 3px 0 var(--shadow)}
+.floatTop{position:absolute;z-index:30;top:14px;left:14px;display:flex;gap:8px;align-items:center}
+.brandChip{background:rgba(244,231,201,.95);border:3px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);padding:8px 11px;font-size:12px;font-weight:1000;letter-spacing:.5px}
+.resetBtn{position:absolute;z-index:60;right:14px;top:14px;border:2px solid var(--ink);background:rgba(244,231,201,.92);padding:6px 9px;font-weight:900;cursor:pointer;box-shadow:3px 3px 0 var(--shadow)}
+.texture::after{content:"";position:absolute;inset:0;pointer-events:none;background:url('./fx-paper-grain.png') repeat;mix-blend-mode:multiply;opacity:.045}
+
+/* STREET */
+#street{background:#c9b78e}
+.streetBg{position:absolute;inset:-2%;background:url('./map-street.png') center 57%/cover no-repeat;image-rendering:pixelated;filter:saturate(.88) brightness(.98)}
+.streetShade{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(255,240,199,.05),rgba(30,25,19,.07) 60%,rgba(20,18,14,.52));pointer-events:none}
+.streetTitle{position:absolute;left:50%;top:7%;transform:translateX(-50%);z-index:6;color:#fff7df;text-align:center;text-shadow:3px 3px 0 #302820,-1px -1px 0 #302820}
+.streetTitle h1{font-size:24px;margin:0 0 5px;letter-spacing:3px}.streetTitle p{font-size:12px;margin:0;opacity:.9}
+.streetPlayer{position:absolute;z-index:7;width:82px;left:52%;bottom:12%;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.25));transition:left .8s ease,bottom .8s ease,transform .8s ease}
+.streetPlayer.walk{left:15.5%;bottom:16%;transform:scale(.88)}
+.bakeryDoor{position:absolute;z-index:8;left:7.3%;top:53%;width:10.4%;height:25%;min-width:90px;min-height:145px;border:0;background:transparent;cursor:pointer}
+.bakeryDoor::before{content:"";position:absolute;inset:-6px;border:4px solid var(--amber);box-shadow:0 0 0 4px rgba(39,35,29,.75),0 0 24px rgba(233,189,85,.9);animation:glow 1s ease-in-out infinite alternate}
+.bakeryDoor::after{content:"门没关";position:absolute;left:50%;top:-38px;transform:translateX(-50%);white-space:nowrap;background:var(--cream);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--shadow);padding:5px 8px;font-size:12px;font-weight:900}
+@keyframes glow{from{opacity:.5;transform:scale(.985)}to{opacity:1;transform:scale(1.015)}}
+.streetPrompt{position:absolute;z-index:9;left:50%;bottom:22px;transform:translateX(-50%);width:min(540px,calc(100% - 26px));background:rgba(244,231,201,.96);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--shadow);padding:11px 14px;text-align:center;font-weight:900;line-height:1.55}
+.streetPrompt small{display:block;color:var(--muted);font-weight:700;margin-top:2px}
+
+/* SHOP */
+#shop{background:linear-gradient(#b9d1bf 0 22%,#dacaa5 22% 100%)}
+.shopRoom{position:absolute;inset:5% 4% 7%;border:5px solid var(--ink);background:#d9c298;box-shadow:8px 8px 0 rgba(23,21,18,.82);overflow:hidden}
+.shopWall{position:absolute;inset:0 0 37% 0;background:linear-gradient(#d9d0ad,#c8b681);border-bottom:5px solid var(--ink)}
+.shopWall::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 94px,rgba(82,67,48,.11) 95px 98px)}
+.shopFloor{position:absolute;left:0;right:0;bottom:0;height:37%;background:repeating-linear-gradient(90deg,#b48b61 0 46px,#a97c53 47px 50px);border-top:2px solid #876241}
+.counter{position:absolute;z-index:3;left:8%;right:8%;bottom:14%;height:25%;background:#8f5d3e;border:5px solid var(--ink);box-shadow:6px 6px 0 rgba(37,30,23,.55)}
+.counter::before{content:"";position:absolute;left:0;right:0;top:18%;border-top:4px solid #6e432f}
+.banner{position:absolute;left:32%;top:8%;width:36%;height:27%;object-fit:cover;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);filter:saturate(.75)}
+.chen{position:absolute;z-index:5;left:12%;bottom:25%;height:55%;max-width:42%;object-fit:contain;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.2))}
+.blueprintProp{position:absolute;z-index:7;right:17%;bottom:25%;width:180px;height:112px;background:#d7e0d3;border:4px solid var(--ink);transform:rotate(-4deg);box-shadow:6px 6px 0 var(--shadow);cursor:pointer;transition:transform .15s}
+.blueprintProp:hover{transform:rotate(-1deg) translateY(-4px)}
+.blueprintProp::before{content:"";position:absolute;inset:12px;border:2px dashed var(--teal);background:linear-gradient(90deg,transparent 48%,rgba(49,95,90,.18) 49% 51%,transparent 52%),linear-gradient(transparent 48%,rgba(49,95,90,.18) 49% 51%,transparent 52%)}
+.blueprintProp::after{content:"建筑图";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-weight:1000;color:var(--teal);letter-spacing:5px}
+.dialogue{position:absolute;z-index:12;left:39%;top:20%;width:min(520px,52%);background:var(--cream);border:4px solid var(--ink);box-shadow:6px 6px 0 var(--shadow);padding:14px 16px;line-height:1.65;font-weight:800}
+.dialogue::before{content:"";position:absolute;left:-19px;bottom:23px;border-width:12px 18px 12px 0;border-style:solid;border-color:transparent var(--ink) transparent transparent}
+.dialogue::after{content:"";position:absolute;left:-13px;bottom:25px;border-width:10px 15px 10px 0;border-style:solid;border-color:transparent var(--cream) transparent transparent}
+.dialogue b{color:var(--brick)}
+.dialogueHint{margin-top:8px;color:var(--muted);font-size:12px;font-weight:700}
+
+/* BLUEPRINT */
+#blueprint{background:#263b3a}
+.bpDesk{position:absolute;inset:0;background:radial-gradient(circle at 50% 44%,#7f6747 0 20%,#604a32 56%,#3e3124 100%)}
+.bpPaper{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-.5deg);width:min(1040px,91vw);height:min(690px,86vh);background:#dce2d6;border:6px solid #263b3a;box-shadow:12px 13px 0 rgba(0,0,0,.42);padding:24px;overflow:hidden}
+.bpPaper::after{content:"";position:absolute;inset:0;background:url('./fx-paper-grain.png') repeat;opacity:.07;mix-blend-mode:multiply;pointer-events:none}
+.bpHeader{position:relative;z-index:2;display:flex;align-items:flex-start;gap:16px;border-bottom:3px solid #315f5a;padding-bottom:12px}
+.bpHeader h2{margin:0;font-size:23px;letter-spacing:2px;color:#234845}.bpHeader p{margin:4px 0 0;color:#52706d;font-size:13px}.bpHeader .spacer{flex:1}.bpFold{font-size:11px;border:2px solid #315f5a;padding:5px 8px;font-weight:900;color:#315f5a}
+.planArea{position:absolute;z-index:2;left:5%;right:5%;top:18%;bottom:7%;border:3px solid #315f5a;background:rgba(255,255,255,.15)}
+.room{position:absolute;border:4px solid #315f5a;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;text-align:center;color:#315f5a;font-weight:1000;letter-spacing:1px}
+.room.frontRoom{left:7%;top:27%;width:31%;height:43%}
+.room.frontRoom::before{content:"店面";font-size:24px}
+.room.unknown{left:47%;top:27%;width:23%;height:43%;border-style:dashed;background:repeating-linear-gradient(135deg,rgba(49,95,90,.05) 0 12px,rgba(49,95,90,.13) 13px 22px);cursor:pointer;animation:unknownPulse 1.3s ease-in-out infinite alternate}
+.room.unknown::before{content:"？";font-size:58px}
+.room.unknown::after{content:"还有一扇门";position:absolute;bottom:14px;font-size:12px;letter-spacing:1px}
+@keyframes unknownPulse{from{box-shadow:inset 0 0 0 0 rgba(233,189,85,0)}to{box-shadow:inset 0 0 0 6px rgba(233,189,85,.48)}}
+.room.dark1{right:5%;top:10%;width:18%;height:22%;background:#455f5d;border-color:#455f5d;color:#b7cac5;filter:blur(.2px)}
+.room.dark2{right:4%;bottom:10%;width:25%;height:27%;background:#455f5d;border-color:#455f5d;color:#b7cac5}
+.room.dark1::before,.room.dark2::before{content:"未绘出";font-size:12px;opacity:.55}
+.bpNote{position:absolute;z-index:4;left:8%;bottom:10%;background:#f2e0a9;border:2px solid #80633f;box-shadow:3px 3px 0 rgba(67,52,36,.35);padding:8px 10px;transform:rotate(2deg);font-size:12px;font-weight:800;max-width:330px}
+.bpStatus{position:absolute;z-index:4;right:4%;top:4%;color:#315f5a;font-size:11px;font-weight:900}
+.bpMapBtn{position:absolute;z-index:7;right:22px;bottom:22px}
+
+/* ROOM / PUZZLE */
+#room{background:#8a7355}
+.roomScene{position:absolute;inset:0;background:linear-gradient(#897861 0 65%,#6f5a42 65% 100%)}
+.roomScene::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.08),transparent 18% 82%,rgba(0,0,0,.12)),repeating-linear-gradient(0deg,transparent 0 78px,rgba(255,255,255,.025) 79px 80px)}
+.roomDoor{position:absolute;left:5%;top:17%;width:15%;height:56%;border:5px solid var(--ink);background:#5d4634;box-shadow:inset 0 0 0 12px #7d624a,5px 5px 0 rgba(0,0,0,.3)}
+.wallNote{position:absolute;left:25%;top:12%;width:260px;background:#e9d89e;border:3px solid var(--ink);box-shadow:4px 4px 0 var(--shadow);padding:12px 14px;transform:rotate(-1deg);line-height:1.5;font-size:13px}
+.wallNote b{display:block;margin-bottom:5px;color:var(--brick)}
+.crate{position:absolute;left:31%;bottom:14%;width:250px;height:170px;border:5px solid var(--ink);background:#9d7048;box-shadow:7px 7px 0 rgba(25,20,16,.55);cursor:pointer;transition:transform .15s}
+.crate:hover{transform:translateY(-4px)}
+.crate::before,.crate::after{content:"";position:absolute;background:#775235}
+.crate::before{left:0;right:0;height:24px;top:30px;border-top:4px solid var(--ink);border-bottom:4px solid var(--ink)}
+.crate::after{top:0;bottom:0;width:30px;left:calc(50% - 15px);border-left:4px solid var(--ink);border-right:4px solid var(--ink)}
+.crateLabel{position:absolute;z-index:2;left:50%;top:57%;transform:translate(-50%,-50%);background:#efe3be;border:3px solid var(--ink);padding:7px 11px;font-weight:1000;white-space:nowrap}
+.projector{position:absolute;right:10%;bottom:16%;width:260px;height:240px;border:5px solid var(--ink);background:#4d5959;box-shadow:7px 7px 0 rgba(0,0,0,.45);padding:16px}
+.projectorScreen{height:150px;border:4px solid var(--ink);background:#d7dcc9;display:flex;align-items:center;justify-content:center;text-align:center;padding:12px;color:#56625d;font-weight:900;line-height:1.4}
+.projectorLabel{margin-top:12px;color:#e8e0c6;font-size:12px;font-weight:800}
+.roomPrompt{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:7;background:rgba(244,231,201,.96);border:3px solid var(--ink);box-shadow:5px 5px 0 var(--shadow);padding:9px 13px;font-weight:900;text-align:center;max-width:560px}
+
+/* WORKBENCH */
+#bench{background:#2d3230}
+.benchWrap{position:absolute;inset:0;padding:18px;display:grid;grid-template-columns:300px minmax(360px,1fr) 360px;gap:14px;background:linear-gradient(#53615d 0 58px,#37413e 58px 100%)}
+.benchTop{position:absolute;z-index:20;left:18px;right:18px;top:8px;height:46px;display:flex;align-items:center;gap:10px;color:#f5edda}
+.benchTitle{font-weight:1000;letter-spacing:1px}.benchTitle small{font-weight:700;opacity:.72;margin-left:8px}.benchTop .spacer{flex:1}
+.pane{margin-top:45px;min-height:0;background:#ede0be;border:4px solid var(--ink);box-shadow:6px 6px 0 #171512;position:relative;overflow:hidden}
+.paneHead{height:48px;border-bottom:3px solid var(--ink);background:#d8c59a;padding:9px 12px;display:flex;align-items:center;gap:8px;font-weight:1000}
+.paneHead small{font-size:11px;color:var(--muted);font-weight:700}.paneHead .spacer{flex:1}
+.drive{height:calc(100% - 48px);display:grid;grid-template-columns:92px 1fr;min-height:0}
+.folders{border-right:3px solid var(--ink);background:#c8b58c;padding:8px}
+.folder{display:block;width:100%;border:2px solid transparent;background:transparent;text-align:left;padding:8px 6px;margin-bottom:4px;font-size:12px;font-weight:900;cursor:pointer}
+.folder.active{border-color:var(--ink);background:#efe3c2}
+.files{padding:10px;overflow:auto}
+.fileCard{border:3px solid var(--ink);background:#fff7df;box-shadow:3px 3px 0 rgba(23,21,18,.65);padding:8px;margin-bottom:9px;cursor:grab;user-select:none;transition:transform .1s}
+.fileCard:hover{transform:translate(-1px,-1px)}
+.fileCard.used{opacity:.35;filter:grayscale(.65);cursor:not-allowed}
+.fileIcon{font-size:22px;float:left;margin-right:8px}.fileName{font-weight:1000;font-size:13px}.fileMeta{font-size:10px;color:var(--muted);margin-top:3px}.driveHint{font-size:11px;line-height:1.5;color:var(--muted);padding:9px;border:2px dashed #99896d;background:#f8ecd0;margin-bottom:10px}
+.canvasPane{display:flex;flex-direction:column}
+.goal{margin:10px 12px 0;padding:10px;border:3px solid var(--ink);background:#f5e7ba;line-height:1.45;font-size:12px}
+.goal b{display:block;color:var(--brick);margin-bottom:3px;font-size:13px}
+.workspace{margin:10px 12px;flex:1;min-height:0;border:3px dashed #7c6d57;background:#d8c79f;padding:10px;overflow:auto}
+.workspaceTitle{font-size:11px;color:#675d4f;font-weight:900;margin-bottom:8px}.slots{display:flex;flex-direction:column;gap:8px;min-height:300px}
+.slot{min-height:56px;border:3px dashed #8d7d65;background:rgba(255,248,229,.5);display:flex;align-items:center;justify-content:center;color:#8a7c69;font-size:12px;font-weight:800;position:relative}
+.slot.filled{border-style:solid;border-color:var(--ink);background:#fff7df;justify-content:flex-start;padding:8px;cursor:grab;color:var(--ink)}
+.slot.dragover{outline:4px solid var(--amber)}
+.slot .remove{margin-left:auto;border:2px solid var(--ink);background:#f0c8a5;width:28px;height:28px;font-weight:1000;cursor:pointer}
+.slot .moveBtns{display:flex;gap:3px;margin-left:7px}.slot .moveBtns button{border:2px solid var(--ink);background:#eee0bd;width:26px;height:26px;font-weight:1000;cursor:pointer}
+.runBar{padding:0 12px 12px;display:flex;align-items:center;gap:9px}.runBar .tries{font-size:11px;color:var(--muted);font-weight:800}.runBar .spacer{flex:1}
+.previewPane{display:flex;flex-direction:column}
+.previewWrap{padding:12px;flex:1;min-height:0;overflow:auto;background:#b8ab8c}
+.siteWindow{min-height:390px;border:5px solid var(--ink);background:#fefbf1;box-shadow:5px 5px 0 rgba(23,21,18,.55);position:relative;overflow:hidden}
+.browserBar{height:34px;border-bottom:3px solid var(--ink);background:#d3d0c4;display:flex;align-items:center;gap:6px;padding:0 8px;font-size:10px;color:#6b675f}
+.dot{width:9px;height:9px;border:2px solid #514e49;border-radius:50%}.addressBar{margin-left:6px;border:2px solid #737069;background:#ecebe4;padding:3px 7px;flex:1}
+.siteBody{padding:15px;display:flex;flex-direction:column;gap:9px;min-height:340px}
+.emptySite{margin:auto;text-align:center;color:#aaa08d;font-size:12px;line-height:1.6}.previewItem{border:2px solid transparent;padding:6px;position:relative}.previewItem.name{font-size:20px;font-weight:1000}.previewItem.image{height:112px;background:linear-gradient(145deg,#e9c7b4,#b96352);border:3px solid #6e4637;display:flex;align-items:center;justify-content:center;font-size:42px}.previewItem.price{font-size:18px;font-weight:1000;color:#a34d3b}.previewItem.buy{background:#9d4d3a;color:white;border:3px solid var(--ink);text-align:center;font-weight:1000;padding:10px}.previewItem.contact{background:#68808a;color:white;border:3px solid var(--ink);text-align:center;font-weight:900}.previewItem.slogan{font-size:13px;background:#f2e8c9;border:2px solid #b49b6f;text-align:center}.previewItem.debug{font:11px ui-monospace,Consolas,monospace;background:#342f2b;color:#f1d4a0;border:2px solid #171512}.previewItem.selfie{height:88px;background:#b9c7bb;border:3px solid #516759;display:flex;align-items:center;justify-content:center;font-size:34px}
+.customerBox{margin-top:10px;border:3px solid var(--ink);background:#fff7df;padding:10px;min-height:92px;position:relative}
+.customerBox b{display:block;font-size:12px;color:var(--teal);margin-bottom:5px}.customerText{font-size:13px;line-height:1.55;font-weight:800}.customerMood{position:absolute;right:10px;bottom:8px;font-size:26px}.hintBox{display:none;margin-top:8px;border:2px dashed #927f61;background:#f5e8c7;padding:8px;font-size:11px;line-height:1.45;color:#6f6251}.hintBox.show{display:block}
+
+/* SUCCESS / TOOL */
+#success{background:#202a28;color:#efe8d7}
+.successStage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#415a53 0,#263532 44%,#17201e 100%)}
+.successCard{width:min(920px,92vw);height:min(660px,88vh);border:5px solid #171512;background:#e7dcc0;color:var(--ink);box-shadow:12px 12px 0 rgba(0,0,0,.55);position:relative;overflow:hidden;padding:22px}
+.successCard::after{content:"";position:absolute;inset:0;background:url('./fx-paper-grain.png') repeat;opacity:.055;mix-blend-mode:multiply;pointer-events:none}
+.successPreview{position:absolute;left:5%;top:8%;width:43%;height:47%;border:4px solid var(--ink);background:#fff9e8;box-shadow:5px 5px 0 rgba(0,0,0,.25);padding:12px;overflow:hidden}
+.successPreview .receipt{position:absolute;right:10px;bottom:10px;background:#fff;border:2px dashed #555;padding:8px 10px;font-size:11px;transform:rotate(2deg)}
+.successCustomer{position:absolute;left:51%;top:12%;right:5%;background:#fff7df;border:4px solid var(--ink);box-shadow:5px 5px 0 rgba(0,0,0,.25);padding:14px;line-height:1.55;font-weight:900}
+.successCustomer .big{font-size:32px;float:left;margin-right:9px}.successCustomer small{display:block;color:var(--muted);margin-top:4px}
+.successMap{position:absolute;left:5%;right:5%;bottom:8%;height:34%;border-top:4px solid var(--ink);padding-top:15px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;align-items:stretch}
+.rewardBlock{border:3px solid var(--ink);background:#f6e9c5;box-shadow:4px 4px 0 rgba(0,0,0,.25);padding:12px;position:relative;overflow:hidden;opacity:0;transform:translateY(14px);transition:.45s ease}
+.rewardBlock.show{opacity:1;transform:translateY(0)}
+.rewardBlock h3{margin:0 0 7px;font-size:15px}.rewardBlock p{font-size:11px;line-height:1.5;margin:5px 0;color:#655a4c}.rewardIcon{font-size:36px;float:left;margin-right:9px}.stamp{position:absolute;right:8px;bottom:8px;border:3px solid #9a4c37;color:#9a4c37;padding:4px 7px;font-weight:1000;transform:rotate(-7deg);font-size:12px}
+.finalBtn{position:absolute;right:24px;bottom:20px;z-index:10;opacity:0;pointer-events:none;transition:.3s}.finalBtn.show{opacity:1;pointer-events:auto}
+.successFlash{position:absolute;inset:0;background:#fff8c9;opacity:0;pointer-events:none}.successFlash.go{animation:flash .8s ease-out}@keyframes flash{0%{opacity:.8}100%{opacity:0}}
+
+/* END MAP */
+#end{background:#263b3a}.endPaper{position:absolute;left:50%;top:49%;transform:translate(-50%,-50%);width:min(1000px,92vw);height:min(680px,86vh);background:#dce2d6;border:6px solid #263b3a;box-shadow:12px 13px 0 rgba(0,0,0,.42);padding:24px}.endRoom{position:absolute;left:47%;top:31%;width:23%;height:38%;border:5px solid #315f5a;background:#f0f0dc;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#315f5a}.endRoom strong{font-size:22px}.endRoom small{font-size:11px;margin-top:8px;line-height:1.45}.endLine{position:absolute;left:38%;top:49%;width:9%;height:8px;background:#e9bd55;border-top:2px solid #315f5a;border-bottom:2px solid #315f5a}.endLine::after{content:"组成";position:absolute;left:50%;top:-24px;transform:translateX(-50%);font-size:10px;font-weight:1000;color:#315f5a;white-space:nowrap}.endFront{position:absolute;left:7%;top:31%;width:31%;height:38%;border:4px solid #315f5a;background:#e9eddf;display:flex;align-items:center;justify-content:center;color:#315f5a;font-weight:1000;font-size:22px}.endUnknown{position:absolute;right:5%;top:14%;width:19%;height:22%;border:4px dashed #4d6764;background:#47625f;color:#bcd0c9;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:1000}.endUnknown2{position:absolute;right:4%;bottom:9%;width:25%;height:25%;border:4px dashed #4d6764;background:#47625f;color:#bcd0c9;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:1000}.endCaption{position:absolute;left:6%;bottom:7%;max-width:600px;color:#315f5a;line-height:1.55}.endCaption h2{margin:0 0 6px;font-size:22px}.endCaption p{margin:0;font-size:12px}.endRewards{position:absolute;right:5%;bottom:5%;text-align:right;color:#315f5a;font-size:11px;font-weight:900}.endRewards span{display:inline-block;border:2px solid #315f5a;padding:5px 7px;margin-left:5px;background:#edf0df}.endNext{position:absolute;left:50%;top:20px;transform:translateX(-50%);color:#d9e7df;font-size:12px;font-weight:900;letter-spacing:2px}.endAction{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:5}
+
+@media(max-width:980px){
+  .benchWrap{grid-template-columns:250px 1fr 320px;gap:9px;padding:10px}.benchTop{left:10px;right:10px}.pane{margin-top:45px}.dialogue{left:36%;width:58%}.chen{left:6%}
+}
+@media(max-width:780px){
+  html,body{overflow:auto}.screen{position:absolute;min-height:100vh;overflow:auto}.benchWrap{position:relative;display:flex;flex-direction:column;min-height:100vh}.pane{min-height:520px}.drive{min-height:430px}.previewPane{min-height:580px}.streetPlayer{width:64px}.bakeryDoor{left:5%;width:13%}.shopRoom{inset:3% 2% 5%}.chen{height:46%;left:1%}.dialogue{left:28%;top:13%;width:69%;font-size:13px}.blueprintProp{right:8%;width:145px;height:92px}.successCard{height:auto;min-height:980px;overflow:auto}.successPreview,.successCustomer,.successMap{position:relative;left:auto;right:auto;top:auto;bottom:auto;width:auto;height:auto;margin-bottom:14px}.successMap{display:flex;flex-direction:column}.finalBtn{position:relative;right:auto;bottom:auto;margin-top:8px;float:right}}
+</style>
+</head>
+<body>
+
+<button class="resetBtn" id="resetBtn" title="重新玩今天">↺ 重置今天</button>
+
+<section class="screen active" id="street">
+  <div class="streetBg"></div><div class="streetShade"></div>
+  <div class="streetTitle"><h1>旧城 · 第一天</h1><p>你只是路过。巷子里有一家店还亮着灯。</p></div>
+  <img class="streetPlayer pixel" id="streetPlayer" src="./avatar-player.png" alt="玩家">
+  <button class="bakeryDoor" id="bakeryDoor" aria-label="进入面包店"></button>
+  <div class="streetPrompt" id="streetPrompt">陈姨的面包店今天没有关门。<small>没有任务列表。你想进去，就点那扇门。</small></div>
+</section>
+
+<section class="screen texture" id="shop">
+  <div class="floatTop"><div class="brandChip">小巷面包店 · 里面</div></div>
+  <div class="shopRoom">
+    <div class="shopWall"></div><div class="shopFloor"></div>
+    <img class="banner" src="./shop-banner-bread.png" alt="面包店横幅">
+    <div class="counter"></div>
+    <img class="chen pixel" src="./npc-chenyi.png" alt="陈姨">
+    <div class="dialogue" id="shopDialogue">
+      小栈，你来得正好。<br>
+      网上那间小店一直开不起来，前面的人只留下一张<b>建筑图</b>。<br>
+      我只看得懂店面，后面那些房间……我也不知道是什么。
+      <div class="dialogueHint">图在柜台上。你先自己看看，不用急着听我解释。</div>
+    </div>
+    <button class="blueprintProp" id="blueprintProp" aria-label="拿起建筑图"></button>
+  </div>
+</section>
+
+<section class="screen texture" id="blueprint">
+  <div class="bpDesk"></div>
+  <div class="bpPaper">
+    <div class="bpHeader"><div><h2>小巷面包店 · 建筑图</h2><p>纸上只剩一部分。没有名字的地方，得进去以后才知道。</p></div><div class="spacer"></div><div class="bpFold">DAY 01</div></div>
+    <div class="planArea">
+      <div class="room frontRoom"></div>
+      <button class="room unknown" id="unknownRoom" aria-label="进入未知房间"></button>
+      <div class="room dark1"></div><div class="room dark2"></div>
+    </div>
+    <div class="bpNote">角落里写着：<br><b>“别先给房间起名字。先进去，看它到底负责什么。”</b></div>
+    <div class="bpStatus">已知区域：1　未知：？</div>
+  </div>
+</section>
+
+<section class="screen" id="room">
+  <div class="floatTop"><button class="btn small ghost" id="roomMapBtn">🗺️ 打开建筑图</button></div>
+  <div class="roomScene">
+    <div class="roomDoor"></div>
+    <div class="wallNote"><b>墙上贴着三条顾客留言</b>“这是卖什么？”<br>“多少钱？”<br>“我要怎么买？”</div>
+    <button class="crate" id="crate" aria-label="打开未命名盒子"><span class="crateLabel">未命名盒子 01</span></button>
+    <div class="projector"><div class="projectorScreen" id="projectorScreen">店面预览失灵。<br>盒子里的东西，似乎能让它重新出现。</div><div class="projectorLabel">旧投影机 · 会显示你拼出来的店面</div></div>
+    <div class="roomPrompt">这个房间没有说明书。<br>桌上只有一个盒子，墙上只有顾客留下的问题。</div>
+  </div>
+</section>
+
+<section class="screen" id="bench">
+  <div class="benchTop"><div class="benchTitle">未命名盒子 01 <small>把你认为有用的东西放进店面，然后“开店试试”</small></div><div class="spacer"></div><button class="btn small ghost" id="benchMapBtn">🗺️ 建筑图</button><button class="btn small ghost" id="backRoomBtn">← 回房间</button></div>
+  <div class="benchWrap">
+    <div class="pane">
+      <div class="paneHead">盒子内容 <div class="spacer"></div><small>像整理网盘一样找东西</small></div>
+      <div class="drive">
+        <div class="folders" id="folders"></div>
+        <div class="files" id="files"></div>
+      </div>
+    </div>
+
+    <div class="pane canvasPane">
+      <div class="paneHead">店面工作台 <div class="spacer"></div><small>最多放 5 样</small></div>
+      <div class="goal"><b>今天不要求“漂亮”。</b>只要一位第一次来的顾客能弄清楚：<strong>这里卖什么、多少钱、怎么买。</strong></div>
+      <div class="workspace">
+        <div class="workspaceTitle">从上到下，就是顾客看到的顺序。可以拖动，也可以用 ↑ ↓ 调整。</div>
+        <div class="slots" id="slots"></div>
+      </div>
+      <div class="runBar"><span class="tries" id="tries">还没试营业</span><div class="spacer"></div><button class="btn amber" id="clearBtn">清空</button><button class="btn primary" id="runShopBtn">▶ 开店试试</button></div>
+    </div>
+
+    <div class="pane previewPane">
+      <div class="paneHead">顾客看到的店 <div class="spacer"></div><small>结果不会替你说“对/错”</small></div>
+      <div class="previewWrap">
+        <div class="siteWindow"><div class="browserBar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><div class="addressBar">xiaoxiang-bakery.shop</div></div><div class="siteBody" id="siteBody"><div class="emptySite">这里现在几乎是空的。<br>把盒子里的东西放进来。</div></div></div>
+        <div class="customerBox"><b>路过的顾客</b><div class="customerText" id="customerText">“门开着……但我还不知道这里卖什么。”</div><div class="customerMood" id="customerMood">🤔</div></div>
+        <div class="hintBox" id="hintBox"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screen texture" id="success">
+  <div class="successStage"><div class="successFlash" id="successFlash"></div>
+    <div class="successCard">
+      <div class="successPreview" id="successPreview"></div>
+      <div class="successCustomer"><span class="big">🥐</span>“草莓可颂，28 元。好，我知道怎么买了。”<small>顾客完成了今天第一笔下单。你不是答对了一道题，而是真的把店面拼到能用了。</small></div>
+      <div class="successMap">
+        <div class="rewardBlock" id="rewardMap"><div class="rewardIcon">🗺️</div><h3>建筑图补全</h3><p>刚才那个无名房间终于有了名字：<strong>页面间</strong>。里面装着顾客眼前能看到、能操作的东西。</p><div class="stamp">已发现</div></div>
+        <div class="rewardBlock" id="rewardTool"><div class="rewardIcon">🔍</div><h3>获得工具：检查镜</h3><p>真实世界名称：<strong>Elements</strong><br>以后页面少了东西，先用它确认：东西到底在不在。</p><div class="stamp">工具 +1</div></div>
+        <div class="rewardBlock" id="rewardKeepsake"><div class="rewardIcon">🧾</div><h3>纪念物：001 试营业单</h3><p>记录第一件自己拼活的东西。以后查案时，这张单会提醒你：先看结果，再判断哪里出问题。</p><div class="stamp">收藏 +1</div></div>
+      </div>
+      <button class="btn primary finalBtn" id="finalBtn">把发现写回建筑图 →</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen texture" id="end">
+  <div class="endNext">DAY 01 · COMPLETE</div>
+  <div class="endPaper">
+    <div class="bpHeader"><div><h2>小巷面包店 · 建筑图</h2><p>不是系统先告诉你的。这个房间，是你自己进去、拼过、跑通以后才画出来的。</p></div><div class="spacer"></div><div class="bpFold">发现 1</div></div>
+    <div class="endFront">店面</div><div class="endLine"></div>
+    <div class="endRoom"><strong>页面间</strong><small>里面有：<br>图片 · 文字 · 价格 · 按钮</small></div>
+    <div class="endUnknown">？</div><div class="endUnknown2">？</div>
+    <div class="endCaption"><h2>今天只弄懂了一件事。</h2><p>一个网页不是一张死图片。顾客看到的内容，是由许多可以单独放进去、拿掉、排列和检查的东西组成的。后面的房间为什么会连到这里，建筑图还没有告诉你。</p></div>
+    <div class="endRewards"><span>🔍 检查镜</span><span>🧾 001 试营业单</span></div>
+  </div>
+  <button class="btn amber endAction" id="replayBtn">再玩一次今天</button>
+</section>
+
+<script>
+(() => {
+  const screens=[...document.querySelectorAll('.screen')];
+  const show=id=>{screens.forEach(s=>s.classList.toggle('active',s.id===id));window.scrollTo(0,0)};
+  const reset=()=>{try{localStorage.removeItem('fs_v03_day1')}catch(e){};location.reload()};
+  document.getElementById('resetBtn').onclick=()=>{if(confirm('要把今天的探索从头再玩吗？'))reset()};
+  document.getElementById('replayBtn').onclick=reset;
+
+  const storage={
+    mem:{},
+    get(k){try{return localStorage.getItem(k)}catch(e){return this.mem[k]||null}},
+    set(k,v){try{localStorage.setItem(k,v)}catch(e){this.mem[k]=v}},
+    remove(k){try{localStorage.removeItem(k)}catch(e){delete this.mem[k]}}
+  };
+  const save=(patch={})=>{
+    const prev=JSON.parse(storage.get('fs_v03_day1')||'{}');
+    storage.set('fs_v03_day1',JSON.stringify({...prev,...patch}));
+  };
+
+  // Entry: world first, explanation later.
+  let entering=false;
+  document.getElementById('bakeryDoor').onclick=()=>{
+    if(entering)return; entering=true;
+    document.getElementById('streetPlayer').classList.add('walk');
+    document.getElementById('streetPrompt').innerHTML='你走向那扇没关的门……<small>里面没有任务列表，先看看发生了什么。</small>';
+    setTimeout(()=>show('shop'),900);
+  };
+  document.getElementById('blueprintProp').onclick=()=>{save({gotMap:true});show('blueprint')};
+  document.getElementById('unknownRoom').onclick=()=>{save({foundRoom:true});show('room')};
+  document.getElementById('crate').onclick=()=>{save({openedBox:true});show('bench')};
+  document.getElementById('backRoomBtn').onclick=()=>show('room');
+  document.getElementById('roomMapBtn').onclick=()=>show('blueprint');
+  document.getElementById('benchMapBtn').onclick=()=>show('blueprint');
+
+  const pieces=[
+    {id:'name',folder:'文字',icon:'🔤',name:'草莓可颂',meta:'顾客看到的商品名称'},
+    {id:'price',folder:'文字',icon:'🏷️',name:'¥28',meta:'商品价格'},
+    {id:'slogan',folder:'文字',icon:'✦',name:'今日新鲜出炉',meta:'一句宣传话'},
+    {id:'debug',folder:'文字',icon:'⚠️',name:'DEBUG: product_id=17',meta:'盒子里遗留的内部文字'},
+    {id:'image',folder:'图片',icon:'🥐',name:'草莓可颂照片',meta:'商品图片'},
+    {id:'selfie',folder:'图片',icon:'👩',name:'店主自拍',meta:'陈姨的生活照'},
+    {id:'buy',folder:'按钮',icon:'🛒',name:'立即购买',meta:'让顾客直接下单'},
+    {id:'contact',folder:'按钮',icon:'☎️',name:'联系店主',meta:'先联系再问'},
+  ];
+  const folderOrder=['文字','图片','按钮'];
+  let activeFolder='文字';
+  let placed=[];
+  let tries=0;
+  let solved=false;
+  let dragFrom=null;
+
+  const folders=document.getElementById('folders');
+  const files=document.getElementById('files');
+  const slots=document.getElementById('slots');
+  const siteBody=document.getElementById('siteBody');
+  const customerText=document.getElementById('customerText');
+  const customerMood=document.getElementById('customerMood');
+  const hintBox=document.getElementById('hintBox');
+  const triesEl=document.getElementById('tries');
+
+  function renderFolders(){
+    folders.innerHTML=folderOrder.map(f=>`<button class="folder ${f===activeFolder?'active':''}" data-folder="${f}">📁 ${f}</button>`).join('');
+    folders.querySelectorAll('.folder').forEach(b=>b.onclick=()=>{activeFolder=b.dataset.folder;renderFolders();renderFiles()});
+  }
+  function renderFiles(){
+    const list=pieces.filter(p=>p.folder===activeFolder);
+    files.innerHTML=`<div class="driveHint">双击 / 点击可以加入工作台，也可以拖进去。<br>盒子里不一定每样都该给顾客看。</div>`+list.map(p=>{
+      const used=placed.includes(p.id);
+      return `<div class="fileCard ${used?'used':''}" draggable="${used?'false':'true'}" data-id="${p.id}" tabindex="0"><span class="fileIcon">${p.icon}</span><div class="fileName">${p.name}</div><div class="fileMeta">${p.meta}</div><div style="clear:both"></div></div>`
+    }).join('');
+    files.querySelectorAll('.fileCard').forEach(card=>{
+      const add=()=>{if(card.classList.contains('used'))return;addPiece(card.dataset.id)};
+      card.ondblclick=add; card.onclick=add;
+      card.ondragstart=e=>{dragFrom={type:'file',id:card.dataset.id};e.dataTransfer.setData('text/plain',card.dataset.id)};
+      card.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();add()}};
+    });
+  }
+  function addPiece(id,index=placed.length){
+    if(solved||placed.includes(id))return;
+    if(placed.length>=5){customerText.textContent='“工作台已经塞满了。要不要先拿掉一个再试？”';customerMood.textContent='😵‍💫';return}
+    placed.splice(index,0,id);renderAll();
+  }
+  function removePiece(id){placed=placed.filter(x=>x!==id);renderAll()}
+  function movePiece(id,delta){const i=placed.indexOf(id);if(i<0)return;const j=i+delta;if(j<0||j>=placed.length)return;placed.splice(i,1);placed.splice(j,0,id);renderAll()}
+  function renderSlots(){
+    const slotCount=5;
+    slots.innerHTML=Array.from({length:slotCount},(_,i)=>{
+      const id=placed[i];
+      if(!id)return `<div class="slot" data-index="${i}">空位 ${i+1}</div>`;
+      const p=pieces.find(x=>x.id===id);
+      return `<div class="slot filled" draggable="true" data-index="${i}" data-id="${id}"><span class="fileIcon">${p.icon}</span><div><div class="fileName">${p.name}</div><div class="fileMeta">${p.folder}</div></div><div class="moveBtns"><button data-up="${id}" title="上移">↑</button><button data-down="${id}" title="下移">↓</button></div><button class="remove" data-remove="${id}" title="拿掉">×</button></div>`;
+    }).join('');
+    slots.querySelectorAll('.slot').forEach(slot=>{
+      slot.ondragover=e=>{e.preventDefault();slot.classList.add('dragover')};
+      slot.ondragleave=()=>slot.classList.remove('dragover');
+      slot.ondrop=e=>{
+        e.preventDefault();slot.classList.remove('dragover');const target=Number(slot.dataset.index);
+        if(!dragFrom)return;
+        if(dragFrom.type==='file') addPiece(dragFrom.id,Math.min(target,placed.length));
+        if(dragFrom.type==='placed'){
+          const from=placed.indexOf(dragFrom.id); if(from<0)return;
+          const [id]=placed.splice(from,1); let t=target; if(from<target)t--; placed.splice(Math.max(0,Math.min(t,placed.length)),0,id);renderAll();
+        }
+        dragFrom=null;
+      };
+      if(slot.dataset.id)slot.ondragstart=e=>{dragFrom={type:'placed',id:slot.dataset.id};e.dataTransfer.setData('text/plain',slot.dataset.id)};
+    });
+    slots.querySelectorAll('[data-remove]').forEach(b=>b.onclick=e=>{e.stopPropagation();removePiece(b.dataset.remove)});
+    slots.querySelectorAll('[data-up]').forEach(b=>b.onclick=e=>{e.stopPropagation();movePiece(b.dataset.up,-1)});
+    slots.querySelectorAll('[data-down]').forEach(b=>b.onclick=e=>{e.stopPropagation();movePiece(b.dataset.down,1)});
+  }
+  function previewHTML(id){
+    const p=pieces.find(x=>x.id===id);
+    if(id==='name')return `<div class="previewItem name">${p.name}</div>`;
+    if(id==='image')return `<div class="previewItem image">🥐🍓</div>`;
+    if(id==='price')return `<div class="previewItem price">${p.name}</div>`;
+    if(id==='buy')return `<div class="previewItem buy">${p.name}</div>`;
+    if(id==='contact')return `<div class="previewItem contact">${p.name}</div>`;
+    if(id==='slogan')return `<div class="previewItem slogan">${p.name}</div>`;
+    if(id==='debug')return `<div class="previewItem debug">${p.name}</div>`;
+    if(id==='selfie')return `<div class="previewItem selfie">👩‍🍳</div>`;
+    return '';
+  }
+  function renderPreview(){
+    siteBody.innerHTML=placed.length?placed.map(previewHTML).join(''):`<div class="emptySite">这里现在几乎是空的。<br>把盒子里的东西放进来。</div>`;
+  }
+  function renderAll(){renderFolders();renderFiles();renderSlots();renderPreview()}
+
+  function evaluate(){
+    const idx=id=>placed.indexOf(id);
+    const has=id=>idx(id)>=0;
+    const core=['name','image','price','buy'];
+    if(placed.length===0)return {ok:false,msg:'“这里什么都没有。我连你卖什么都看不到。”',mood:'😶'};
+    if(has('debug'))return {ok:false,msg:'“这串 product_id 是给顾客看的吗？我完全看不懂。”',mood:'😵'};
+    if(has('contact')&&has('buy'))return {ok:false,msg:'“两个按钮都在抢我注意。我只是想买面包，到底该按哪个？”',mood:'🤨'};
+    if(has('contact')&&!has('buy'))return {ok:false,msg:'“我只想买一个面包，为什么要先联系店主？”',mood:'📞'};
+    if(has('selfie')&&!has('image'))return {ok:false,msg:'“我看见店主了……可是面包长什么样？”',mood:'🙂'};
+    if(!has('name')&&!has('image'))return {ok:false,msg:'“这里到底卖什么？我完全看不出来。”',mood:'🤔'};
+    if(!has('name'))return {ok:false,msg:'“我看见一张面包照片，但它叫什么？”',mood:'🧐'};
+    if(!has('image'))return {ok:false,msg:'“我知道名字了，但第一次来，我还是想先看看它长什么样。”',mood:'👀'};
+    if(!has('price'))return {ok:false,msg:'“草莓可颂看起来不错……多少钱？”',mood:'💰'};
+    if(!has('buy'))return {ok:false,msg:'“都看懂了，可我要怎么买？”',mood:'🙋'};
+    if(placed.length>5)return {ok:false,msg:'“信息太多了，我一下抓不到重点。”',mood:'😵‍💫'};
+    const lastInfo=Math.max(idx('name'),idx('image'));
+    if(idx('price')<lastInfo)return {ok:false,msg:'“价格先跳出来了，可我还没看清这是卖什么。”',mood:'🤨'};
+    if(idx('buy')<idx('price'))return {ok:false,msg:'“还没看到价格，就先让我买？我会犹豫。”',mood:'😬'};
+    if(has('slogan')&&idx('slogan')>idx('buy'))return {ok:false,msg:'“我已经走到购买按钮了，后面那句宣传话反而有点多余。”',mood:'🤷'};
+    if(!core.every(has))return {ok:false,msg:'“好像还少了一样关键东西。”',mood:'🤔'};
+    return {ok:true,msg:'“草莓可颂，28 元。好，我知道怎么买了。”',mood:'😋'};
+  }
+
+  function maybeHint(){
+    if(tries===2){hintBox.classList.add('show');hintBox.innerHTML='<b>陈姨在门外：</b>别想“网页应该长什么样”，只想一个第一次来的顾客站在门口，最先要弄清楚哪几件事。'}
+    if(tries===4){hintBox.classList.add('show');hintBox.innerHTML='<b>墙上的三条留言还在：</b>“卖什么？”、“多少钱？”、“怎么买？”——盒子里有些东西只是干扰，不一定都要放进去。'}
+  }
+  function runShop(){
+    if(solved)return;
+    tries++;triesEl.textContent=`已经试营业 ${tries} 次`;
+    const r=evaluate();customerText.textContent=r.msg;customerMood.textContent=r.mood;maybeHint();
+    if(r.ok){solved=true;save({solved:true,tries,solution:placed});document.getElementById('runShopBtn').disabled=true;document.getElementById('clearBtn').disabled=true;setTimeout(showSuccess,900)}
+  }
+  document.getElementById('runShopBtn').onclick=runShop;
+  document.getElementById('clearBtn').onclick=()=>{if(solved)return;placed=[];customerText.textContent='“门开着……但我还不知道这里卖什么。”';customerMood.textContent='🤔';renderAll()};
+
+  function successMini(){
+    const content=placed.filter(x=>['name','image','price','buy','slogan'].includes(x)).map(previewHTML).join('');
+    return `<div style="border:3px solid #27231d;background:#fff;padding:8px;height:100%;overflow:hidden"><div style="font-size:10px;color:#777;border-bottom:2px solid #aaa;padding-bottom:4px">xiaoxiang-bakery.shop</div><div style="padding:7px;display:flex;flex-direction:column;gap:4px">${content}</div><div class="receipt">订单 #001<br>草莓可颂 ×1<br>¥28 · 成功</div></div>`;
+  }
+  function showSuccess(){
+    show('success');document.getElementById('successPreview').innerHTML=successMini();
+    const flash=document.getElementById('successFlash');flash.classList.add('go');
+    setTimeout(()=>document.getElementById('rewardMap').classList.add('show'),900);
+    setTimeout(()=>document.getElementById('rewardTool').classList.add('show'),1800);
+    setTimeout(()=>document.getElementById('rewardKeepsake').classList.add('show'),2700);
+    setTimeout(()=>document.getElementById('finalBtn').classList.add('show'),3400);
+  }
+  document.getElementById('finalBtn').onclick=()=>{save({day1Complete:true});show('end')};
+
+  renderAll();
+
+  // Resume only after a full completion. During testing, unfinished runs restart from the street intentionally.
+  const persisted=JSON.parse(storage.get('fs_v03_day1')||'{}');
+  if(persisted.day1Complete){show('end')}
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>自动排版器 V2 · Aesthetic Bridge</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <section class="panel input-panel">
+      <div class="brand">
+        <span class="mark"></span>
+        <div>
+          <h1>自动排版器 V2</h1>
+          <p>Evidence → Intent → Skeleton</p>
+        </div>
+      </div>
+
+      <label class="upload">
+        <input id="imageInput" type="file" accept="image/*">
+        <span>上传底图</span>
+        <small>人物、产品、风景、纹理都可以</small>
+      </label>
+
+      <div class="field">
+        <label for="titleInput">主标题</label>
+        <textarea id="titleInput" rows="3">MARGIN TALKS</textarea>
+      </div>
+
+      <div class="field">
+        <label for="subtitleInput">副标题</label>
+        <textarea id="subtitleInput" rows="3">Image and type follow without fuss</textarea>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="subjectSelect">素材类型</label>
+          <select id="subjectSelect">
+            <option value="auto">自动判断</option>
+            <option value="portrait">人物</option>
+            <option value="product">产品</option>
+            <option value="landscape">风景</option>
+            <option value="texture">纹理</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="toneSelect">文案气质</label>
+          <select id="toneSelect">
+            <option value="editorial">编辑感</option>
+            <option value="eastern">东方/国风</option>
+            <option value="technical">科技/参数</option>
+            <option value="commercial">商业促销</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="goalSelect">目标</label>
+        <select id="goalSelect">
+          <option value="expressive">表达感更强</option>
+          <option value="premium">高级克制</option>
+          <option value="clear">清晰可读</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="countSelect">候选数量</label>
+        <select id="countSelect">
+          <option value="3">3 个：快速定向</option>
+          <option value="6" selected>6 个：默认挑选</option>
+          <option value="9">9 个：多看几种</option>
+          <option value="12">12 个：灵感探索</option>
+        </select>
+      </div>
+
+      <button id="generateBtn" class="primary">生成设计方向</button>
+
+      <div class="facts">
+        <h2>当前判断</h2>
+        <dl id="factsList"></dl>
+      </div>
+    </section>
+
+    <section class="stage">
+      <div class="hero-preview panel">
+        <canvas id="mainCanvas" width="600" height="800"></canvas>
+        <div class="hero-copy">
+          <span id="selectedFamily">等待生成</span>
+          <h2 id="selectedName">上传图文后生成方向</h2>
+          <p id="selectedReason">V2 会先判断素材和文案，再选择版式骨架。</p>
+        </div>
+      </div>
+
+      <div id="cards" class="cards"></div>
+    </section>
+  </main>
+
+  <script src="../engine/aesthetic-roles.js"></script>
+  <script src="../engine/visual-signature.js"></script>
+  <script src="../engine/skeleton-selector.js"></script>
+  <script src="../engine/choice-policy.js"></script>
+  <script src="../engine/render-plan.js"></script>
+  <script src="../skeletons/skeleton-pack-v1.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

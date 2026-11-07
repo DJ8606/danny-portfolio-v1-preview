@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<title>勇者大战猛兽 - 精灵进化版</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: none; }
+  html, body { overscroll-behavior: none; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #05050f;
+    min-height: 100vh;
+    color: #fff;
+  }
+  #game { max-width: 480px; margin: 0 auto; }
+
+  .topbar {
+    display: flex; gap: 6px; padding: 8px; flex-wrap: wrap;
+    background: linear-gradient(180deg, #1a1a3e, #0a0a1e);
+  }
+  .stat {
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #ffcc44;
+    border-radius: 10px;
+    padding: 4px 10px;
+    font-weight: bold; font-size: 13px;
+  }
+  .stat.coin { border-color: #ffcc44; color: #ffcc44; }
+  .stat.level { border-color: #66ddff; color: #66ddff; }
+  .stat.combo { border-color: #ff66aa; color: #ff66aa; }
+
+  #canvas {
+    display: block;
+    width: 100%;
+    height: 500px;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255,100,200,0.15), transparent 60%),
+      linear-gradient(180deg, #1a0a3a 0%, #2a0f5a 50%, #4a1f7a 100%);
+    border-top: 3px solid #ffcc44;
+    border-bottom: 3px solid #ffcc44;
+    cursor: grab;
+    touch-action: none;
+  }
+  #canvas:active { cursor: grabbing; }
+
+  .hud {
+    padding: 6px 8px;
+    background: linear-gradient(180deg, #0a0a1e, #1a1a3e);
+  }
+  .hp-row {
+    display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
+  }
+  .hp-row .label { font-size: 11px; width: 26px; text-align:center; }
+  .hp-row .label.hero { color: #66ff88; }
+  .hp-row .label.beast { color: #ff8866; }
+  .hp-bar {
+    flex: 1;
+    height: 13px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .hp-fill { height: 100%; transition: width 0.15s; }
+  .hp-fill.hero { background: linear-gradient(90deg, #22aa44, #66ff88); }
+  .hp-fill.beast { background: linear-gradient(90deg, #ff2244, #ff8866); }
+  .hp-text {
+    position: absolute; inset: 0;
+    text-align: center; font-size: 10px; line-height: 11px;
+    font-weight: bold; text-shadow: 1px 1px 0 #000;
+  }
+
+  .ult-row {
+    display: flex; align-items: center; gap: 6px; margin-top:4px;
+  }
+  .ult-bar {
+    flex: 1;
+    height: 11px;
+    background: rgba(0,0,0,0.5);
+    border: 2px solid #ffcc44;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ult-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff66cc, #ffcc44);
+    transition: width 0.2s;
+  }
+  .ult-text {
+    position: absolute; inset: 0;
+    text-align: center; font-size: 9px; line-height: 9px;
+    font-weight: bold; color: #fff;
+    text-shadow: 1px 1px 0 #000;
+  }
+  .ult-btn {
+    background: linear-gradient(180deg, #ff66cc, #aa3399);
+    color: #fff; border: 2px solid #fff;
+    border-radius: 8px; padding: 3px 10px;
+    font-weight: bold; font-size: 11px;
+    cursor: pointer;
+    opacity: 0.5;
+  }
+  .ult-btn.ready {
+    opacity: 1;
+    animation: ultGlow 0.8s infinite;
+    cursor: pointer;
+  }
+  @keyframes ultGlow {
+    0%,100% { box-shadow: 0 0 0 rgba(255,102,204,0); }
+    50% { box-shadow: 0 0 16px rgba(255,102,204,1); }
+  }
+
+  /* 精灵技能槽 */
+  .skill-slots {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    padding: 4px 8px 8px;
+    background: linear-gradient(180deg, #1a1a3e, #0a0a1e);
+  }
+  .skill-slot {
+    position: relative;
+    background: rgba(0,0,0,0.6);
+    border: 2px solid #66aaff;
+    border-radius: 12px;
+    padding: 6px 4px;
+    text-align: center;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 56px;
+  }
+  .skill-slot.empty {
+    border-color: #555;
+    background: rgba(0,0,0,0.3);
+    color: #666;
+  }
+  .skill-slot:active:not(.cd):not(.empty) { transform: translateY(2px); }
+  .skill-slot .icon { font-size: 22px; line-height: 1; }
+  .skill-slot .name { font-size: 10px; color: #aaccff; margin-top: 2px; }
+  .skill-slot .key { position: absolute; top: 2px; left: 4px; font-size: 9px; color: #ffcc44; }
+  .skill-slot .cd-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.7);
+    color: #fff; font-size: 18px; font-weight: bold;
+    display: none;
+    align-items: center; justify-content: center;
+  }
+  .skill-slot.cd .cd-overlay { display: flex; }
+  .skill-slot.ready { animation: skillReady 1s infinite; }
+  @keyframes skillReady {
+    0%,100% { box-shadow: 0 0 0 rgba(102,170,255,0); }
+    50% { box-shadow: 0 0 12px rgba(102,170,255,1); }
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 0 8px 8px;
+    background: #0a0a1e;
+  }
+  .tab-btn {
+    background: linear-gradient(180deg, #66aaff, #4477dd);
+    color: #fff; border: 2px solid #fff;
+    border-radius: 10px; padding: 8px 4px;
+    font-weight: bold; cursor: pointer; font-size: 12px;
+    box-shadow: 0 3px 0 #2255aa;
+  }
+  .tab-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #2255aa; }
+  .tab-btn.spirits { background: linear-gradient(180deg, #aa66ff, #6633cc); box-shadow: 0 3px 0 #331188; position:relative; }
+  .tab-btn.spirits .badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #ff3344; color: #fff;
+    border-radius: 10px; padding: 1px 5px;
+    font-size: 10px;
+    border: 1px solid #fff;
+  }
+
+  .modal {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 100; padding: 12px;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: linear-gradient(180deg, #2a1a4e, #4a2a6e);
+    border: 3px solid #ffcc44;
+    border-radius: 18px;
+    padding: 18px;
+    max-width: 440px; width: 100%;
+    max-height: 85vh; overflow-y: auto;
+    position: relative;
+  }
+  .modal h2 {
+    color: #ffcc44; text-align: center;
+    margin-bottom: 12px; text-shadow: 2px 2px 0 #000;
+  }
+  .close-x {
+    position: absolute; top: 8px; right: 12px;
+    font-size: 24px; cursor: pointer; color: #fff;
+  }
+  .item-row {
+    background: rgba(0,0,0,0.3);
+    border: 2px solid #66aaff;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .item-row .icon { font-size: 32px; width: 44px; text-align: center; }
+  .item-row .info { flex: 1; min-width: 0; }
+  .item-row .name { font-weight: bold; font-size: 14px; color: #ffeeaa; }
+  .item-row .desc { font-size: 11px; color: #ccc; margin-top: 2px; line-height: 1.4; }
+  .item-row .btns { display: flex; flex-direction: column; gap: 4px; }
+  .buy-btn {
+    background: linear-gradient(180deg, #44dd66, #229944);
+    border: 2px solid #fff; color: #fff;
+    padding: 5px 10px; border-radius: 10px;
+    font-weight: bold; cursor: pointer; font-size: 11px;
+    white-space: nowrap;
+  }
+  .buy-btn:disabled { background: #555; cursor: not-allowed; opacity: 0.7; }
+  .buy-btn.equipped { background: linear-gradient(180deg, #ff66aa, #aa3377); }
+  .buy-btn.evolve { background: linear-gradient(180deg, #aa66ff, #6633cc); }
+  .buy-btn.equip { background: linear-gradient(180deg, #44aaff, #2266cc); }
+
+  .gameover, .levelup {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center; justify-content: center;
+    z-index: 150;
+  }
+  .gameover.show, .levelup.show { display: flex; }
+  .gameover-box, .levelup-box {
+    text-align: center;
+    padding: 26px; border-radius: 20px;
+    max-width: 360px;
+  }
+  .gameover-box { background: linear-gradient(180deg, #5a1a1a, #2a0a0a); border: 3px solid #ff4444; }
+  .gameover-box h1 { color: #ff4444; margin-bottom: 12px; text-shadow: 3px 3px 0 #000; }
+  .gameover-box p { margin-bottom: 12px; color: #ffaa88; font-size: 14px; }
+  .levelup-box { background: linear-gradient(180deg, #1a3a5a, #0a1a2a); border: 3px solid #44ddff; }
+  .levelup-box h1 { color: #44ddff; margin-bottom: 12px; text-shadow: 3px 3px 0 #000; }
+  .retry-btn, .next-btn {
+    background: linear-gradient(180deg, #ffcc44, #ff7722);
+    color: #4a2200; border: 3px solid #fff;
+    padding: 12px 30px; border-radius: 20px;
+    font-weight: bold; font-size: 16px;
+    cursor: pointer; box-shadow: 0 4px 0 #882200;
+    margin-top: 8px;
+  }
+  .next-btn { background: linear-gradient(180deg, #44ddff, #2299cc); box-shadow: 0 4px 0 #226688; color: #fff; }
+
+  .toast {
+    position: fixed; top: 14px;
+    left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.9);
+    color: #ffcc44; padding: 8px 16px;
+    border-radius: 20px; font-weight: bold;
+    z-index: 200; border: 2px solid #ffcc44;
+    opacity: 0; pointer-events: none;
+    font-size: 13px;
+    transition: opacity 0.3s;
+  }
+  .toast.show { opacity: 1; }
+
+  .stage-tag {
+    display:inline-block; padding:1px 6px; border-radius:6px;
+    font-size:10px; font-weight:bold; margin-left:4px;
+  }
+  .stage-1 { background:#666; color:#fff; }
+  .stage-2 { background:#44aaff; color:#fff; }
+  .stage-3 { background:linear-gradient(90deg,#ffcc44,#ff66cc); color:#000; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="topbar">
+    <div class="stat coin">💰 <span id="coins">0</span></div>
+    <div class="stat level">🗺 第<span id="levelNum">1</span>关</div>
+    <div class="stat combo">🔥 <span id="combo">0</span></div>
+  </div>
+
+  <canvas id="canvas" width="480" height="500"></canvas>
+
+  <div class="hud">
+    <div class="hp-row">
+      <span class="label hero">❤️</span>
+      <div class="hp-bar"><div class="hp-fill hero" id="heroHpFill" style="width:100%"></div>
+        <div class="hp-text" id="heroHpText">100/100</div></div>
+    </div>
+    <div class="hp-row">
+      <span class="label beast" id="beastLabel">🟢</span>
+      <div class="hp-bar"><div class="hp-fill beast" id="beastHpFill" style="width:100%"></div>
+        <div class="hp-text" id="beastHpText">100/100</div></div>
+    </div>
+    <div class="ult-row">
+      <span class="label" style="color:#ffcc44;">⚡</span>
+      <div class="ult-bar"><div class="ult-fill" id="ultFill" style="width:0%"></div>
+        <div class="ult-text" id="ultText">必杀技 0%</div></div>
+      <button class="ult-btn" id="ultBtn" onclick="useUlt()">放！</button>
+    </div>
+  </div>
+
+  <div class="skill-slots">
+    <div class="skill-slot empty" id="slot0" onclick="useSpiritSkill(0)">
+      <span class="key">1</span><div class="icon">＋</div><div class="name">空</div>
+      <div class="cd-overlay"></div>
+    </div>
+    <div class="skill-slot empty" id="slot1" onclick="useSpiritSkill(1)">
+      <span class="key">2</span><div class="icon">＋</div><div class="name">空</div>
+      <div class="cd-overlay"></div>
+    </div>
+    <div class="skill-slot empty" id="slot2" onclick="useSpiritSkill(2)">
+      <span class="key">3</span><div class="icon">＋</div><div class="name">空</div>
+      <div class="cd-overlay"></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn" onclick="openModal('shop')">⚔ 升级</button>
+    <button class="tab-btn" onclick="openModal('costume')">👕 服装</button>
+    <button class="tab-btn spirits" onclick="openModal('spirits')">🧚 精灵<span class="badge" id="spiritBadge" style="display:none">!</span></button>
+    <button class="tab-btn" onclick="openModal('help')">❓ 玩法</button>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close-x" onclick="closeModal()">✕</span>
+    <h2 id="modalTitle">商店</h2>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="gameover" id="gameover">
+  <div class="gameover-box">
+    <h1>💀 你被打败了</h1>
+    <p id="goText">坚持到了第 1 关</p>
+    <p style="font-size:12px;color:#aa6666;">损失 20% 金币，当前关重打</p>
+    <button class="retry-btn" onclick="retry()">重新挑战</button>
+  </div>
+</div>
+
+<div class="levelup" id="levelup">
+  <div class="levelup-box">
+    <h1 id="luTitle">🏆 通关！</h1>
+    <p id="luText" style="font-size:14px;">击败了 绿史莱姆</p>
+    <p style="margin-top:6px;">💰 奖励 <span id="luCoin">50</span></p>
+    <p style="margin-top:6px;font-size:13px;color:#88ddff;">🧚 获得新精灵 <span id="luSpirit">💚</span></p>
+    <button class="next-btn" onclick="nextLevel()">前往下一关 →</button>
+  </div>
+</div>
+
+<script>
+// ============ 猛兽数据 ============
+const BEASTS = [
+  { name:'绿史莱姆', emoji:'🟢', hp:100,  atk:6,  size:50, coin:15,  spirit:'💚', patterns:['spit'] },
+  { name:'小蝙蝠',   emoji:'🦇', hp:160,  atk:8,  size:46, coin:25,  spirit:'🧛', patterns:['dive','spit'] },
+  { name:'森林狼',   emoji:'🐺', hp:280,  atk:11, size:56, coin:40,  spirit:'🐕', patterns:['dash','spit'] },
+  { name:'剧毒蜘蛛', emoji:'🕷', hp:420,  atk:14, size:54, coin:60,  spirit:'🕸', patterns:['spray','dive'] },
+  { name:'野猪王',   emoji:'🐗', hp:700,  atk:18, size:62, coin:95,  spirit:'🐖', patterns:['dash','dash','spit'] },
+  { name:'巨型鳄鱼', emoji:'🐊', hp:1100, atk:24, size:66, coin:140, spirit:'🦎', patterns:['spray','dash'] },
+  { name:'雪地白熊', emoji:'🐻‍❄️',hp:1800, atk:30, size:68, coin:220, spirit:'🐨', patterns:['rain','dive'] },
+  { name:'狂暴狮王', emoji:'🦁', hp:3000, atk:38, size:72, coin:340, spirit:'🐱', patterns:['dash','spray','rain'] },
+  { name:'草原大象', emoji:'🐘', hp:5000, atk:48, size:80, coin:500, spirit:'🐭', patterns:['rain','dash'] },
+  { name:'海怪章鱼', emoji:'🐙', hp:8000, atk:60, size:78, coin:750, spirit:'🦑', patterns:['spray','spiral'] },
+  { name:'剑齿虎',   emoji:'🐅', hp:13000,atk:80, size:74, coin:1100,spirit:'😼', patterns:['dash','dash','dive'] },
+  { name:'霸王恐龙', emoji:'🦖', hp:22000,atk:105,size:90, coin:1700,spirit:'🦕', patterns:['rain','dash','spray'] },
+  { name:'深海鲨王', emoji:'🦈', hp:36000,atk:140,size:84, coin:2600,spirit:'🐟', patterns:['spiral','dash'] },
+  { name:'远古犀牛', emoji:'🦏', hp:60000,atk:185,size:86, coin:4000,spirit:'🦛', patterns:['dash','dash','rain'] },
+  { name:'雷霆飞龙', emoji:'🐉', hp:100000,atk:240,size:96, coin:6000,spirit:'🐲', patterns:['rain','spiral','dive'] },
+  { name:'九尾妖狐', emoji:'🦊', hp:170000,atk:320,size:80, coin:9000, spirit:'✨', patterns:['spiral','spray','dive'] },
+  { name:'幽冥独角兽',emoji:'🦄',hp:300000,atk:420,size:82, coin:14000,spirit:'🌈', patterns:['rain','spiral','dash'] },
+  { name:'凤凰之灵', emoji:'🔥', hp:520000,atk:560,size:90, coin:21000,spirit:'🐤', patterns:['spiral','rain','spray'] },
+  { name:'魔王巨魔', emoji:'👹', hp:900000,atk:740,size:96, coin:32000,spirit:'👺', patterns:['rain','dash','spiral','dive'] },
+  { name:'混沌神龙', emoji:'🐲', hp:1600000,atk:1000,size:100,coin:50000,spirit:'⭐', patterns:['rain','spiral','spray','dash'] },
+];
+
+// ============ 精灵数据（包含进化形态 + 主动技能）============
+// stages: [Lv1, Lv2, Lv3] 每阶 emoji 和 dmg 倍率
+// skill: 主动技能定义
+const SPIRIT_DATA = {
+  '💚': { name:'史莱姆精灵', stages:[{e:'💚',m:1},{e:'🟢',m:2.2},{e:'👾',m:5}], skill:{id:'heal', name:'治愈光环', icon:'💖', cd:8000, desc:'立即回复 30% HP'} },
+  '🧛': { name:'蝙蝠精灵',   stages:[{e:'🧛',m:1},{e:'🦇',m:2.2},{e:'🌙',m:5}], skill:{id:'lifesteal', name:'吸血光环', icon:'🩸', cd:12000, desc:'10秒内伤害的25%转为HP'} },
+  '🐕': { name:'狼精灵',     stages:[{e:'🐕',m:1},{e:'🐺',m:2.2},{e:'🦮',m:5}], skill:{id:'wolves', name:'狼群召唤', icon:'🐺', cd:10000, desc:'召唤4只狼追击猛兽3秒'} },
+  '🕸': { name:'蜘蛛精灵',   stages:[{e:'🕸',m:1},{e:'🕷',m:2.2},{e:'🦂',m:5}], skill:{id:'web', name:'粘网', icon:'🕸', cd:9000, desc:'5秒内敌弹速度减半'} },
+  '🐖': { name:'野猪精灵',   stages:[{e:'🐖',m:1},{e:'🐗',m:2.2},{e:'🦬',m:5}], skill:{id:'charge', name:'狂暴突进', icon:'💨', cd:11000, desc:'化身冲撞，2秒内无敌+撞穿弹幕'} },
+  '🦎': { name:'鳄鱼精灵',   stages:[{e:'🦎',m:1},{e:'🐊',m:2.2},{e:'🦕',m:5}], skill:{id:'waterjet', name:'水柱喷射', icon:'💦', cd:7000, desc:'前方水柱秒杀范围内敌弹'} },
+  '🐨': { name:'白熊精灵',   stages:[{e:'🐨',m:1},{e:'🐻',m:2.2},{e:'🐻‍❄️',m:5}], skill:{id:'freeze', name:'冰冻领域', icon:'❄️', cd:14000, desc:'冻结猛兽4秒（无法行动）'} },
+  '🐱': { name:'狮王精灵',   stages:[{e:'🐱',m:1},{e:'🦁',m:2.2},{e:'👑',m:5}], skill:{id:'roar', name:'狮吼', icon:'🦁', cd:8000, desc:'清屏所有敌弹+1秒眩晕'} },
+  '🐭': { name:'象鼠精灵',   stages:[{e:'🐭',m:1},{e:'🐹',m:2.2},{e:'🐀',m:5}], skill:{id:'goldrain', name:'金币雨', icon:'💰', cd:15000, desc:'撒落 20 枚金币 + 5个回血药'} },
+  '🦑': { name:'章鱼精灵',   stages:[{e:'🦑',m:1},{e:'🐙',m:2.2},{e:'🌀',m:5}], skill:{id:'inkfield', name:'墨之结界', icon:'🌀', cd:10000, desc:'8方位反向射击 16 颗子弹'} },
+  '😼': { name:'剑齿精灵',   stages:[{e:'😼',m:1},{e:'🐱‍👤',m:2.2},{e:'🐅',m:5}], skill:{id:'slash', name:'连斩', icon:'🗡', cd:9000, desc:'瞬间斩击 5 次大伤害'} },
+  '🦕': { name:'恐龙精灵',   stages:[{e:'🦕',m:1},{e:'🦖',m:2.2},{e:'☄️',m:5}], skill:{id:'meteor', name:'陨石雨', icon:'☄️', cd:13000, desc:'5 颗陨石砸场（伤害高）'} },
+  '🐟': { name:'鲨鱼精灵',   stages:[{e:'🐟',m:1},{e:'🐡',m:2.2},{e:'🦈',m:5}], skill:{id:'spinshot', name:'回旋飞镖', icon:'🌪', cd:8000, desc:'回旋飞镖往返穿透'} },
+  '🦛': { name:'河马精灵',   stages:[{e:'🦛',m:1},{e:'🐃',m:2.2},{e:'🛡',m:5}], skill:{id:'shield', name:'护盾', icon:'🛡', cd:12000, desc:'5秒护盾免疫所有伤害'} },
+  '🐲': { name:'飞龙精灵',   stages:[{e:'🐲',m:1},{e:'🐉',m:2.2},{e:'🌋',m:5}], skill:{id:'firebreath', name:'龙息', icon:'🔥', cd:9000, desc:'前方扇形火焰持续灼烧'} },
+  '✨': { name:'妖狐精灵',   stages:[{e:'✨',m:1},{e:'🦊',m:2.2},{e:'🌟',m:5}], skill:{id:'clone', name:'分身术', icon:'👥', cd:14000, desc:'召唤2个分身同步射击10秒'} },
+  '🌈': { name:'独角兽精灵', stages:[{e:'🌈',m:1},{e:'🦄',m:2.2},{e:'💫',m:5}], skill:{id:'laser', name:'彩虹激光', icon:'🌈', cd:11000, desc:'纵贯全屏穿透激光'} },
+  '🐤': { name:'凤凰精灵',   stages:[{e:'🐤',m:1},{e:'🐔',m:2.2},{e:'🔥',m:5}], skill:{id:'revive', name:'涅槃', icon:'🐤', cd:30000, desc:'被动：死亡时满血复活一次'} },
+  '👺': { name:'巨魔精灵',   stages:[{e:'👺',m:1},{e:'👹',m:2.2},{e:'😈',m:5}], skill:{id:'blackhole', name:'黑洞', icon:'⚫', cd:13000, desc:'吸引所有敌弹到一点后引爆'} },
+  '⭐': { name:'神龙精灵',   stages:[{e:'⭐',m:1},{e:'🌟',m:2.2},{e:'💫',m:5}], skill:{id:'stars', name:'群星陨落', icon:'⭐', cd:15000, desc:'天降 20 颗陨星追踪猛兽'} },
+};
+
+// 进化所需：累计已收集该种数量 + 金币
+const EVOLVE_REQ = [
+  null,                          // Lv1 默认
+  { count:3,  cost:200 },        // Lv1→Lv2
+  { count:8,  cost:2000 },       // Lv2→Lv3
+];
+
+const UPGRADES = [
+  { id:'atk',  name:'攻击力', icon:'⚔', baseCost:25,  costMul:1.4,  desc:'子弹伤害提高' },
+  { id:'hp',   name:'生命值', icon:'❤', baseCost:35,  costMul:1.45, desc:'最大HP+30 并回满' },
+  { id:'rate', name:'攻速',   icon:'⚡', baseCost:50,  costMul:1.5,  desc:'射击间隔减少 (最高 Lv10)', max:10 },
+  { id:'crit', name:'暴击',   icon:'💥', baseCost:80,  costMul:1.55, desc:'暴击率+3% (最高 75%)', max:25 },
+  { id:'mult', name:'多重弹', icon:'🌀', baseCost:300, costMul:2.2,  desc:'同时发射 +1 子弹 (最高 Lv4)', max:4 },
+];
+
+const COSTUMES = [
+  { id:'mage',   name:'魔法师', icon:'🧙', cost:0,      bonus:'初始装扮',         atkMul:1.0, hpMul:1.0 },
+  { id:'ninja',  name:'忍者',   icon:'🥷', cost:800,    bonus:'攻击+40%',          atkMul:1.4, hpMul:1.0 },
+  { id:'knight', name:'骑士',   icon:'🤺', cost:3000,   bonus:'HP+60% 攻+20%',     atkMul:1.2, hpMul:1.6 },
+  { id:'wizard', name:'大法师', icon:'🧞', cost:10000,  bonus:'攻击+100%',         atkMul:2.0, hpMul:1.0 },
+  { id:'vampire',name:'吸血鬼', icon:'🧛', cost:40000,  bonus:'攻+120% HP+50%',    atkMul:2.2, hpMul:1.5 },
+  { id:'angel',  name:'天使',   icon:'👼', cost:150000, bonus:'攻+200% HP+100%',   atkMul:3.0, hpMul:2.0 },
+  { id:'dragon', name:'龙人',   icon:'🐲', cost:700000, bonus:'攻+400% HP+200%',   atkMul:5.0, hpMul:3.0 },
+];
+
+// ============ 状态 ============
+let state = {
+  coins: 0,
+  levelIdx: 0,
+  upgrades: { atk:0, hp:0, rate:0, crit:0, mult:0 },
+  costumes: ['mage'],
+  equippedCostume: 'mage',
+  // 精灵：每种精灵记录拥有数量 和 进化等级
+  spiritOwn: {},        // {'💚': {count:5, stage:1}}
+  equippedSpirits: [null, null, null],  // 出战槽
+  newSpiritKey: null,   // 提示用
+};
+
+const SAVE_KEY = 'beast_hunter_v4';
+function save(){
+  localStorage.setItem(SAVE_KEY, JSON.stringify({
+    coins:state.coins, levelIdx:state.levelIdx, upgrades:state.upgrades,
+    costumes:state.costumes, equippedCostume:state.equippedCostume,
+    spiritOwn:state.spiritOwn, equippedSpirits:state.equippedSpirits
+  }));
+}
+function load(){
+  try {
+    const s = localStorage.getItem(SAVE_KEY);
+    if (s) Object.assign(state, JSON.parse(s));
+    // 旧版本迁移
+    const oldS = localStorage.getItem('beast_hunter_v3');
+    if (oldS && !s) {
+      const old = JSON.parse(oldS);
+      state.coins = old.coins || 0;
+      state.levelIdx = old.levelIdx || 0;
+      state.upgrades = old.upgrades || state.upgrades;
+      state.costumes = old.costumes || ['mage'];
+      state.equippedCostume = old.equippedCostume || 'mage';
+      // 转换精灵列表
+      if (old.spirits) old.spirits.forEach(s=>{
+        if (!state.spiritOwn[s.emoji]) state.spiritOwn[s.emoji] = {count:0, stage:1};
+        state.spiritOwn[s.emoji].count++;
+      });
+    }
+    if (!state.spiritOwn) state.spiritOwn = {};
+    if (!state.equippedSpirits) state.equippedSpirits = [null,null,null];
+  } catch(e){ console.error(e); }
+}
+
+// ============ 工具 ============
+function fmt(n){ n=Math.floor(n); if(n>=1e9)return(n/1e9).toFixed(2)+'B';if(n>=1e6)return(n/1e6).toFixed(2)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n; }
+function getCostume(){ return COSTUMES.find(c=>c.id===state.equippedCostume) || COSTUMES[0]; }
+function heroAtk(){ return Math.floor((6 + state.upgrades.atk * 4) * getCostume().atkMul); }
+function heroMaxHp(){ return Math.floor((100 + state.upgrades.hp * 30) * getCostume().hpMul); }
+function critRate(){ return Math.min(0.75, state.upgrades.crit * 0.03); }
+function shootInterval(){ return Math.max(120, 380 - state.upgrades.rate * 26); }
+function bulletCount(){ return 1 + state.upgrades.mult; }
+function upgradeCost(u){ return Math.floor(u.baseCost * Math.pow(u.costMul, state.upgrades[u.id])); }
+function spiritDmg(key){
+  const info = SPIRIT_DATA[key]; if(!info) return 1;
+  const own = state.spiritOwn[key] || {count:1, stage:1};
+  const stageM = info.stages[own.stage-1].m;
+  // 基础伤害 = 该种类拥有数量 * 4 * 阶段倍率
+  return Math.max(1, Math.floor(own.count * 4 * stageM));
+}
+function spiritStageEmoji(key){
+  const info = SPIRIT_DATA[key]; if(!info) return key;
+  const own = state.spiritOwn[key] || {count:1, stage:1};
+  return info.stages[own.stage-1].e;
+}
+
+function currentBeastData(){
+  const base = BEASTS[state.levelIdx % BEASTS.length];
+  const loop = Math.floor(state.levelIdx / BEASTS.length);
+  const mul = Math.pow(2.5, loop);
+  return { ...base, hp: Math.floor(base.hp*mul), atk: Math.floor(base.atk*mul), coin: Math.floor(base.coin*mul) };
+}
+
+// ============ Canvas ============
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W = canvas.width, H = canvas.height;
+
+function resizeCanvas(){
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  W = rect.width; H = rect.height;
+}
+window.addEventListener('resize', resizeCanvas);
+
+let hero, beast, enemyBullets, heroBullets, spiritBullets, particles, drops, spirits, floaters, stars, clones, wolves;
+let isPaused=false, isDead=false, beastDying=false, beastDieT=0;
+let combo=0, ultCharge=0;
+let lastShoot=0, lastTime=0, attackTimer=0, patternIndex=0;
+let spiritCDs = [0,0,0];         // 三个精灵技能冷却到期时间
+let buffs = {
+  lifesteal: 0,    // 吸血到期时间
+  shield: 0,       // 护盾到期时间
+  charge: 0,       // 突进无敌到期
+  bulletSlow: 1,   // 子弹速度倍率
+  bulletSlowUntil: 0,
+  freeze: 0,       // 猛兽冻结到期
+  stun: 0,         // 猛兽眩晕到期
+  reviveUsed: false,
+};
+
+function initBattle(){
+  hero = { x: W/2, y: H - 70, size: 40, hp: heroMaxHp(), maxHp: heroMaxHp(), invuln: 0 };
+  const b = currentBeastData();
+  beast = {
+    name:b.name, emoji:b.emoji, x:W/2, y:90, size:b.size,
+    hp:b.hp, maxHp:b.hp, atk:b.atk, coin:b.coin, spirit:b.spirit,
+    patterns:b.patterns, dirX:1, shakeT:0, dashing:0, dashTargetX:0, dashTargetY:0,
+    chargingT:0, chargingPattern:''
+  };
+  enemyBullets=[]; heroBullets=[]; spiritBullets=[]; particles=[]; drops=[];
+  floaters=[]; clones=[]; wolves=[];
+  // 出战精灵
+  spirits = [];
+  state.equippedSpirits.forEach((key, i)=>{
+    if (key && state.spiritOwn[key]) {
+      spirits.push({
+        key, emoji: spiritStageEmoji(key),
+        dmg: spiritDmg(key),
+        angle: i * Math.PI*2/3,
+        radius: 60,
+        shootCD: 500, lastShoot: 0,
+        slotIdx: i,
+      });
+    }
+  });
+  stars = [];
+  for (let i=0;i<30;i++) stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.5+0.3, s:Math.random()*0.3+0.1});
+  combo=0; ultCharge=0; beastDying=false; beastDieT=0; isDead=false;
+  attackTimer=800; patternIndex=0;
+  spiritCDs=[0,0,0];
+  buffs = { lifesteal:0, shield:0, charge:0, bulletSlow:1, bulletSlowUntil:0, freeze:0, stun:0, reviveUsed:false };
+  document.getElementById('beastLabel').textContent = b.emoji;
+  updateHUD();
+  updateSkillSlotsUI();
+}
+
+// ============ 输入 ============
+let touchActive=false, touchOffsetX=0, touchOffsetY=0;
+function getPos(e){
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+}
+canvas.addEventListener('touchstart', e=>{ e.preventDefault(); const p=getPos(e); touchActive=true; touchOffsetX=hero.x-p.x; touchOffsetY=hero.y-p.y; }, {passive:false});
+canvas.addEventListener('touchmove',  e=>{ e.preventDefault(); if(!touchActive)return; const p=getPos(e); hero.x = Math.max(20, Math.min(W-20, p.x + touchOffsetX)); hero.y = Math.max(H/2, Math.min(H-25, p.y + touchOffsetY)); }, {passive:false});
+canvas.addEventListener('touchend',   e=>{ e.preventDefault(); touchActive=false; }, {passive:false});
+canvas.addEventListener('mousedown',  e=>{ const p=getPos(e); touchActive=true; touchOffsetX=hero.x-p.x; touchOffsetY=hero.y-p.y; });
+canvas.addEventListener('mousemove',  e=>{ if(!touchActive)return; const p=getPos(e); hero.x = Math.max(20, Math.min(W-20, p.x + touchOffsetX)); hero.y = Math.max(H/2, Math.min(H-25, p.y + touchOffsetY)); });
+window.addEventListener('mouseup', ()=>touchActive=false);
+
+const keys = {};
+window.addEventListener('keydown', e=>{
+  keys[e.key]=true;
+  if(e.key===' ')useUlt();
+  if(e.key==='1')useSpiritSkill(0);
+  if(e.key==='2')useSpiritSkill(1);
+  if(e.key==='3')useSpiritSkill(2);
+});
+window.addEventListener('keyup', e=>{ keys[e.key]=false; });
+
+function handleKeyboard(dt){
+  const sp = 0.35 * dt;
+  if (keys['ArrowLeft']||keys['a'])  hero.x = Math.max(20, hero.x-sp);
+  if (keys['ArrowRight']||keys['d']) hero.x = Math.min(W-20, hero.x+sp);
+  if (keys['ArrowUp']||keys['w'])    hero.y = Math.max(H/2, hero.y-sp);
+  if (keys['ArrowDown']||keys['s'])  hero.y = Math.min(H-25, hero.y+sp);
+}
+
+// ============ 攻击模式 ============
+function startPattern(name){ beast.chargingT = 600; beast.chargingPattern = name; }
+function executePattern(name){
+  const cx = beast.x, cy = beast.y;
+  if (name === 'spit') {
+    for (let i=-1;i<=1;i++) {
+      const dx = hero.x - cx, dy = hero.y - cy;
+      const ang = Math.atan2(dy,dx) + i*0.18;
+      enemyBullets.push({x:cx, y:cy, vx:Math.cos(ang)*0.28, vy:Math.sin(ang)*0.28, r:8, dmg:beast.atk, color:'#ff6644'});
+    }
+  } else if (name === 'spray') {
+    for (let i=0;i<8;i++) {
+      const ang = i * Math.PI/4;
+      enemyBullets.push({x:cx, y:cy, vx:Math.cos(ang)*0.22, vy:Math.sin(ang)*0.22, r:7, dmg:beast.atk, color:'#ff44aa'});
+    }
+  } else if (name === 'rain') {
+    for (let i=0;i<12;i++) setTimeout(()=>{
+      if (beastDying||isDead) return;
+      enemyBullets.push({x:Math.random()*W, y:-10, vx:0, vy:0.25, r:9, dmg:beast.atk*0.8, color:'#ffaa44'});
+    }, i*70);
+  } else if (name === 'spiral') {
+    for (let i=0;i<16;i++) setTimeout(()=>{
+      if (beastDying||isDead) return;
+      const ang = i*Math.PI/4 + (Date.now()/200);
+      enemyBullets.push({x:beast.x, y:beast.y, vx:Math.cos(ang)*0.2, vy:Math.sin(ang)*0.2, r:7, dmg:beast.atk*0.7, color:'#aa66ff'});
+    }, i*50);
+  } else if (name === 'dive') {
+    beast.dashing = 700; beast.dashTargetX = hero.x; beast.dashTargetY = Math.min(H-100, hero.y - 30);
+  } else if (name === 'dash') {
+    beast.dashing = 500; beast.dashTargetX = (hero.x < W/2) ? W-50 : 50; beast.dashTargetY = hero.y - 20;
+  }
+}
+
+// ============ 主循环 ============
+function loop(t){
+  const dt = Math.min(40, t - lastTime);
+  lastTime = t;
+  if (!isPaused && !isDead) update(dt);
+  render();
+  requestAnimationFrame(loop);
+}
+
+function update(dt){
+  handleKeyboard(dt);
+  stars.forEach(s=>{ s.y += s.s*dt*0.05; if(s.y>H){s.y=0;s.x=Math.random()*W;} });
+
+  if (hero.invuln > 0) hero.invuln -= dt;
+
+  // 子弹减速 buff 是否结束
+  if (buffs.bulletSlowUntil && Date.now() > buffs.bulletSlowUntil) {
+    buffs.bulletSlow = 1; buffs.bulletSlowUntil = 0;
+  }
+
+  // 突进无敌
+  if (buffs.charge > 0) {
+    buffs.charge -= dt;
+    hero.invuln = Math.max(hero.invuln, 100);
+    // 撞击敌弹直接清除
+    for (let i=enemyBullets.length-1; i>=0; i--) {
+      const b = enemyBullets[i];
+      if (Math.hypot(b.x-hero.x, b.y-hero.y) < 30) {
+        spawnParticles(b.x, b.y, b.color, 4);
+        enemyBullets.splice(i,1);
+      }
+    }
+    // 撞击猛兽造成大伤害
+    if (!beastDying && Math.hypot(beast.x-hero.x, beast.y-hero.y) < beast.size/2 + 20) {
+      damageBeast(heroAtk()*3, true, beast.x, beast.y);
+    }
+  }
+
+  // 自动射击
+  if (!beastDying) {
+    lastShoot += dt;
+    if (lastShoot >= shootInterval()) {
+      lastShoot = 0;
+      shootMain(hero.x, hero.y);
+      // 分身同步射击
+      clones.forEach(c=>{ if(c.alive) shootMain(c.x, c.y); });
+    }
+  }
+
+  // 分身位置更新
+  clones.forEach(c=>{
+    if (c.alive) {
+      c.life -= dt;
+      c.x = hero.x + c.offsetX;
+      c.y = hero.y;
+      if (c.life <= 0) c.alive = false;
+    }
+  });
+  clones = clones.filter(c=>c.alive);
+
+  // 狼群
+  wolves.forEach(w=>{
+    w.life -= dt;
+    const dx = beast.x - w.x, dy = beast.y - w.y;
+    const d = Math.hypot(dx,dy) || 1;
+    w.x += dx/d * 0.5 * dt;
+    w.y += dy/d * 0.5 * dt;
+    if (!beastDying && d < 40) {
+      damageBeast(w.dmg, false, beast.x, beast.y);
+      spawnParticles(beast.x, beast.y, '#ff8866', 6);
+      w.life = 0;
+    }
+  });
+  wolves = wolves.filter(w=>w.life > 0);
+
+  // 猛兽行为（受冻结/眩晕影响）
+  if (!beastDying) {
+    const frozen = Date.now() < buffs.freeze || Date.now() < buffs.stun;
+    if (!frozen) {
+      beast.x += beast.dirX * 0.06 * dt;
+      if (beast.x < 60) beast.dirX = 1;
+      if (beast.x > W-60) beast.dirX = -1;
+      beast.y = 90 + Math.sin(Date.now()/600) * 12;
+    }
+    if (beast.shakeT > 0) beast.shakeT -= dt;
+    if (!frozen && beast.dashing > 0) {
+      const dx = beast.dashTargetX - beast.x;
+      const dy = beast.dashTargetY - beast.y;
+      const d = Math.hypot(dx,dy);
+      if (d > 5) { beast.x += dx/d * 0.7 * dt; beast.y += dy/d * 0.7 * dt; }
+      beast.dashing -= dt;
+      if (beast.dashing <= 0) beast.y = 90;
+      if (Math.hypot(beast.x-hero.x, beast.y-hero.y) < beast.size/2 + 18 && hero.invuln <= 0 && Date.now() > buffs.shield) {
+        damageHero(beast.atk * 1.2);
+      }
+    } else if (!frozen) {
+      if (beast.chargingT > 0) {
+        beast.chargingT -= dt;
+        if (beast.chargingT <= 0) {
+          executePattern(beast.chargingPattern);
+          beast.chargingPattern = '';
+          attackTimer = 1100 + Math.random()*600;
+        }
+      } else {
+        attackTimer -= dt;
+        if (attackTimer <= 0) {
+          startPattern(beast.patterns[patternIndex % beast.patterns.length]);
+          patternIndex++;
+        }
+      }
+    }
+  } else {
+    beastDieT += dt;
+    if (beastDieT > 1200) victory();
+  }
+
+  // 精灵环绕射击
+  spirits.forEach(s=>{
+    s.angle += 0.003 * dt;
+    s.x = hero.x + Math.cos(s.angle) * s.radius;
+    s.y = hero.y + Math.sin(s.angle) * s.radius;
+    s.lastShoot += dt;
+    if (s.lastShoot >= s.shootCD && !beastDying) {
+      s.lastShoot = 0;
+      const dx = beast.x - s.x, dy = beast.y - s.y;
+      const len = Math.hypot(dx,dy) || 1;
+      heroBullets.push({x:s.x, y:s.y, vx:dx/len*0.45, vy:dy/len*0.45, r:5, dmg:s.dmg, crit:false, color:'#88ffcc', spirit:true});
+    }
+  });
+
+  // 英雄子弹
+  for (let i=heroBullets.length-1; i>=0; i--) {
+    const b = heroBullets[i];
+    b.x += b.vx * dt; b.y += b.vy * dt;
+    if (b.x<-10||b.x>W+10||b.y<-10||b.y>H+10) { heroBullets.splice(i,1); continue; }
+    if (!beastDying && Math.hypot(b.x-beast.x, b.y-beast.y) < beast.size/2) {
+      damageBeast(b.dmg, b.crit, b.x, b.y);
+      spawnParticles(b.x, b.y, b.color, 5);
+      // 吸血
+      if (Date.now() < buffs.lifesteal) {
+        const heal = Math.floor(b.dmg * 0.25);
+        if (heal > 0) { hero.hp = Math.min(hero.maxHp, hero.hp + heal); }
+      }
+      // 穿透弹不删除
+      if (!b.pierce) heroBullets.splice(i,1);
+      if (!b.spirit) { combo++; ultCharge = Math.min(100, ultCharge + 1.5); }
+    }
+  }
+
+  // 敌弹（受 bulletSlow 影响）
+  const slow = buffs.bulletSlow;
+  for (let i=enemyBullets.length-1; i>=0; i--) {
+    const b = enemyBullets[i];
+    b.x += b.vx * dt * slow;
+    b.y += b.vy * dt * slow;
+    if (b.x<-30||b.x>W+30||b.y<-30||b.y>H+30) { enemyBullets.splice(i,1); continue; }
+    // 护盾
+    if (Date.now() < buffs.shield) {
+      if (Math.hypot(b.x-hero.x, b.y-hero.y) < 50) {
+        spawnParticles(b.x, b.y, '#44ddff', 5);
+        enemyBullets.splice(i,1); continue;
+      }
+    }
+    if (hero.invuln <= 0 && Math.hypot(b.x-hero.x, b.y-hero.y) < hero.size/2 - 6 + b.r) {
+      damageHero(b.dmg);
+      spawnParticles(b.x, b.y, b.color, 8);
+      enemyBullets.splice(i,1);
+    }
+  }
+
+  // 掉落物
+  for (let i=drops.length-1; i>=0; i--) {
+    const d = drops[i];
+    d.y += 0.12 * dt; d.vx *= 0.96; d.x += d.vx * dt;
+    if (d.y > H+20) { drops.splice(i,1); continue; }
+    if (Math.hypot(d.x-hero.x, d.y-hero.y) < hero.size/2 + 10) {
+      pickupDrop(d); drops.splice(i,1);
+    }
+  }
+
+  // 粒子
+  for (let i=particles.length-1; i>=0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 0.0008 * dt; p.life -= dt;
+    if (p.life <= 0) particles.splice(i,1);
+  }
+
+  // 飘字
+  for (let i=floaters.length-1; i>=0; i--) {
+    const f = floaters[i];
+    f.y -= 0.06 * dt; f.life -= dt;
+    if (f.life <= 0) floaters.splice(i,1);
+  }
+
+  updateHUD();
+  updateSkillSlotsUI();
+}
+
+function shootMain(x, y){
+  const count = bulletCount();
+  let dmg = heroAtk();
+  let crit = Math.random() < critRate();
+  if (crit) dmg = Math.floor(dmg * 2.5);
+  for (let i=0;i<count;i++) {
+    const offset = (i - (count-1)/2) * 12;
+    heroBullets.push({x:x+offset, y:y-20, vx:0, vy:-0.6, r:6, dmg, crit, color:crit?'#ff66cc':'#ffeb44'});
+  }
+}
+
+// ============ 渲染 ============
+function render(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = '#fff';
+  stars.forEach(s=>{
+    ctx.globalAlpha = 0.4 + Math.sin(Date.now()/300 + s.x)*0.3;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  drops.forEach(d=>{
+    ctx.font='24px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor=d.glow||'#fff'; ctx.shadowBlur=12;
+    ctx.fillText(d.emoji, d.x, d.y);
+    ctx.shadowBlur=0;
+  });
+
+  // 狼群
+  wolves.forEach(w=>{
+    ctx.font='28px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#ff8866'; ctx.shadowBlur=10;
+    ctx.fillText('🐺', w.x, w.y);
+    ctx.shadowBlur=0;
+  });
+
+  // 猛兽
+  if (!beastDying || beastDieT < 1200) {
+    ctx.save();
+    let shake = beast.shakeT > 0 ? (Math.random()-0.5)*8 : 0;
+    if (beastDying) {
+      const f = beastDieT/1200;
+      ctx.globalAlpha = 1-f;
+      ctx.translate(beast.x, beast.y);
+      ctx.rotate(f * Math.PI*4);
+      ctx.scale(1-f*0.7, 1-f*0.7);
+    } else {
+      ctx.translate(beast.x + shake, beast.y);
+      if (beast.chargingT > 0) { ctx.shadowColor='#ff3344'; ctx.shadowBlur = 20 + (1-beast.chargingT/600)*30; }
+      else if (beast.shakeT > 0) { ctx.shadowColor='#fff'; ctx.shadowBlur=25; }
+      // 冻结
+      if (Date.now() < buffs.freeze) { ctx.shadowColor='#44ddff'; ctx.shadowBlur=25; ctx.filter='hue-rotate(180deg)'; }
+      if (Date.now() < buffs.stun) { ctx.shadowColor='#ffff44'; ctx.shadowBlur=18; }
+    }
+    ctx.font = beast.size + 'px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(beast.emoji, 0, 0);
+    ctx.restore();
+    ctx.filter='none';
+
+    if (beast.chargingT > 0) {
+      const p = 1 - beast.chargingT/600;
+      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(beast.x-30, beast.y+beast.size/2+6, 60, 5);
+      ctx.fillStyle='#ff3344'; ctx.fillRect(beast.x-30, beast.y+beast.size/2+6, 60*p, 5);
+    }
+    // 冻结图标
+    if (Date.now() < buffs.freeze) {
+      ctx.font='24px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('❄️', beast.x+beast.size/2, beast.y-beast.size/2);
+    }
+    if (Date.now() < buffs.stun) {
+      ctx.font='24px sans-serif'; ctx.textAlign='center';
+      ctx.fillText('💫', beast.x+beast.size/2, beast.y-beast.size/2);
+    }
+  }
+
+  // 分身
+  clones.forEach(c=>{
+    ctx.save(); ctx.globalAlpha=0.6;
+    ctx.font = hero.size + 'px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#aa66ff'; ctx.shadowBlur=10;
+    ctx.fillText(getCostume().icon, c.x, c.y);
+    ctx.restore(); ctx.shadowBlur=0;
+  });
+
+  // 精灵
+  spirits.forEach(s=>{
+    ctx.font='22px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor='#88ffcc'; ctx.shadowBlur=8;
+    ctx.fillText(s.emoji, s.x, s.y);
+    ctx.shadowBlur=0;
+  });
+
+  // 英雄
+  ctx.save();
+  if (hero.invuln > 0 && Math.floor(hero.invuln/80)%2===0) ctx.globalAlpha = 0.4;
+  ctx.font = hero.size + 'px sans-serif';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor='#44aaff'; ctx.shadowBlur=12;
+  ctx.fillText(getCostume().icon, hero.x, hero.y);
+  ctx.restore(); ctx.shadowBlur=0;
+
+  // 护盾光圈
+  if (Date.now() < buffs.shield) {
+    const t = (buffs.shield - Date.now())/5000;
+    ctx.strokeStyle = `rgba(68,221,255,${0.5+Math.sin(Date.now()/100)*0.3})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(hero.x, hero.y, 46, 0, Math.PI*2); ctx.stroke();
+  }
+  // 突进光效
+  if (buffs.charge > 0) {
+    ctx.strokeStyle = '#ffaa44';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(hero.x, hero.y, 30, 0, Math.PI*2); ctx.stroke();
+  }
+  // 吸血光环
+  if (Date.now() < buffs.lifesteal) {
+    ctx.strokeStyle = `rgba(255,68,102,${0.4+Math.sin(Date.now()/120)*0.2})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(hero.x, hero.y, 36, 0, Math.PI*2); ctx.stroke();
+  }
+
+  // 英雄子弹
+  heroBullets.forEach(b=>{
+    ctx.fillStyle=b.color; ctx.shadowColor=b.color; ctx.shadowBlur=10;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.shadowBlur=0;
+
+  // 敌弹
+  enemyBullets.forEach(b=>{
+    ctx.fillStyle=b.color; ctx.shadowColor=b.color; ctx.shadowBlur=12;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r*0.4, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.shadowBlur=0;
+
+  particles.forEach(p=>{
+    ctx.globalAlpha = Math.max(0, p.life/p.maxLife);
+    ctx.fillStyle=p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  floaters.forEach(f=>{
+    ctx.globalAlpha = Math.max(0, f.life/f.maxLife);
+    ctx.font = `bold ${f.size}px sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillStyle=f.color; ctx.strokeStyle='#000'; ctx.lineWidth=3;
+    ctx.strokeText(f.text, f.x, f.y); ctx.fillText(f.text, f.x, f.y);
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ============ 战斗事件 ============
+function damageBeast(dmg, crit, x, y){
+  if (beastDying) return;
+  beast.hp -= dmg;
+  beast.shakeT = 100;
+  floaters.push({x:x||beast.x, y:y||beast.y, vy:-1, text:(crit?'💥':'')+fmt(dmg), color:crit?'#ff5577':'#ffeb44', size:crit?22:16, life:600, maxLife:600});
+  if (beast.hp <= 0) {
+    beastDying = true; beastDieT = 0;
+    for (let i=0;i<15;i++) drops.push({x:beast.x+(Math.random()-0.5)*60, y:beast.y, vx:(Math.random()-0.5)*0.2, type:'coin', emoji:'💰', val:Math.floor(beast.coin/15), glow:'#ffcc44'});
+    spawnParticles(beast.x, beast.y, '#ffcc44', 40);
+  } else {
+    if (Math.random() < 0.04) spawnDrop(beast.x, beast.y);
+  }
+}
+
+function damageHero(dmg){
+  // 凤凰复活
+  if (hero.hp - dmg <= 0 && !buffs.reviveUsed) {
+    const hasPhoenix = state.equippedSpirits.includes('🐤');
+    if (hasPhoenix) {
+      buffs.reviveUsed = true;
+      hero.hp = hero.maxHp;
+      hero.invuln = 1500;
+      floaters.push({x:hero.x, y:hero.y, vy:-1, text:'🐤 涅槃复活!', color:'#ffaa44', size:24, life:1500, maxLife:1500});
+      spawnParticles(hero.x, hero.y, '#ffcc44', 40);
+      return;
+    }
+  }
+  hero.hp -= dmg;
+  hero.invuln = 800;
+  combo = 0;
+  floaters.push({x:hero.x, y:hero.y, vy:-1, text:'-'+fmt(dmg), color:'#ff4444', size:18, life:700, maxLife:700});
+  spawnParticles(hero.x, hero.y, '#ff4444', 12);
+  if (hero.hp <= 0) gameOver();
+}
+
+function spawnDrop(x, y){
+  const r = Math.random();
+  if (r < 0.5) drops.push({x, y, vx:(Math.random()-0.5)*0.2, type:'coin', emoji:'💰', val:Math.max(2,Math.floor(beast.coin*0.05)), glow:'#ffcc44'});
+  else if (r < 0.8) drops.push({x, y, vx:(Math.random()-0.5)*0.2, type:'hp', emoji:'❤️', val:Math.floor(hero.maxHp*0.15), glow:'#ff66aa'});
+  else drops.push({x, y, vx:(Math.random()-0.5)*0.2, type:'ult', emoji:'⚡', val:30, glow:'#ffff66'});
+}
+
+function pickupDrop(d){
+  if (d.type === 'coin') { state.coins += d.val; floaters.push({x:hero.x, y:hero.y-20, vy:-1, text:'+'+d.val+'💰', color:'#ffcc44', size:14, life:700, maxLife:700}); }
+  else if (d.type === 'hp') { hero.hp = Math.min(hero.maxHp, hero.hp + d.val); floaters.push({x:hero.x, y:hero.y-20, vy:-1, text:'+'+d.val+'HP', color:'#66ff88', size:14, life:700, maxLife:700}); }
+  else if (d.type === 'ult') { ultCharge = Math.min(100, ultCharge + d.val); floaters.push({x:hero.x, y:hero.y-20, vy:-1, text:'⚡+'+d.val, color:'#ffff66', size:14, life:700, maxLife:700}); }
+}
+
+function spawnParticles(x,y,color,n){
+  for (let i=0;i<n;i++) {
+    const ang = Math.random()*Math.PI*2;
+    const sp = Math.random()*0.3+0.1;
+    particles.push({x,y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,r:Math.random()*3+1,color,life:500+Math.random()*300, maxLife:800});
+  }
+}
+
+function useUlt(){
+  if (ultCharge < 100 || beastDying || isDead) return;
+  ultCharge = 0;
+  enemyBullets.forEach(b=>spawnParticles(b.x, b.y, b.color, 4));
+  enemyBullets = [];
+  floaters.push({x:W/2, y:H/2, vy:-0.3, text:'💥 必杀!', color:'#ffcc44', size:36, life:1500, maxLife:1500});
+  for (let i=0;i<20;i++) setTimeout(()=>{
+    if(beastDying||isDead) return;
+    damageBeast(heroAtk()*1.5, true, beast.x+(Math.random()-0.5)*40, beast.y+(Math.random()-0.5)*40);
+    spawnParticles(beast.x, beast.y, '#ff66cc', 6);
+  }, i*30);
+}
+
+// ============ 精灵主动技能 ============
+function useSpiritSkill(slotIdx){
+  const key = state.equippedSpirits[slotIdx];
+  if (!key) { showToast('请先在精灵页装备一只精灵'); return; }
+  if (spiritCDs[slotIdx] > Date.now()) return;
+  if (beastDying || isDead) return;
+  const info = SPIRIT_DATA[key];
+  const skill = info.skill;
+  spiritCDs[slotIdx] = Date.now() + skill.cd;
+  // 执行
+  executeSkill(skill.id, key);
+  floaters.push({x:hero.x, y:hero.y-30, vy:-0.4, text:skill.icon+' '+skill.name, color:'#88ffcc', size:18, life:1000, maxLife:1000});
+}
+
+function executeSkill(id, key){
+  const own = state.spiritOwn[key];
+  const power = own ? own.stage : 1;  // 等级 1-3 影响威力
+  if (id === 'heal') {
+    const amt = Math.floor(hero.maxHp * (0.3 + 0.1*power));
+    hero.hp = Math.min(hero.maxHp, hero.hp + amt);
+    floaters.push({x:hero.x, y:hero.y-10, vy:-1, text:'+'+amt+'HP', color:'#66ff88', size:18, life:800, maxLife:800});
+  } else if (id === 'lifesteal') {
+    buffs.lifesteal = Date.now() + 10000;
+  } else if (id === 'wolves') {
+    for (let i=0;i<4;i++) {
+      wolves.push({x:hero.x+(i-2)*30, y:hero.y, dmg: Math.floor(heroAtk()*2*power), life:3000});
+    }
+  } else if (id === 'web') {
+    buffs.bulletSlow = 0.4;
+    buffs.bulletSlowUntil = Date.now() + 5000;
+  } else if (id === 'charge') {
+    buffs.charge = 2000;
+  } else if (id === 'waterjet') {
+    // 销毁前方所有敌弹 + 对猛兽伤害
+    for (let i=enemyBullets.length-1; i>=0; i--) {
+      const b = enemyBullets[i];
+      if (Math.abs(b.x-hero.x) < 60 && b.y < hero.y) {
+        spawnParticles(b.x, b.y, '#44ddff', 5);
+        enemyBullets.splice(i,1);
+      }
+    }
+    damageBeast(heroAtk()*6*power, true, beast.x, beast.y);
+  } else if (id === 'freeze') {
+    buffs.freeze = Date.now() + (3000 + power*500);
+  } else if (id === 'roar') {
+    enemyBullets.forEach(b=>spawnParticles(b.x, b.y, b.color, 4));
+    enemyBullets = [];
+    buffs.stun = Date.now() + 1000;
+  } else if (id === 'goldrain') {
+    for (let i=0;i<20;i++) setTimeout(()=>{
+      drops.push({x:Math.random()*W, y:-10, vx:0, type:'coin', emoji:'💰', val:Math.max(5,Math.floor(beast.coin*0.04)), glow:'#ffcc44'});
+    }, i*100);
+    for (let i=0;i<5;i++) setTimeout(()=>{
+      drops.push({x:Math.random()*W, y:-10, vx:0, type:'hp', emoji:'❤️', val:Math.floor(hero.maxHp*0.1), glow:'#ff66aa'});
+    }, i*200);
+  } else if (id === 'inkfield') {
+    for (let i=0;i<16;i++) {
+      const ang = i*Math.PI/8;
+      heroBullets.push({x:hero.x, y:hero.y, vx:Math.cos(ang)*0.4, vy:Math.sin(ang)*0.4, r:7, dmg:heroAtk()*power, crit:false, color:'#aa66ff', spirit:false});
+    }
+  } else if (id === 'slash') {
+    for (let i=0;i<5;i++) setTimeout(()=>{
+      if(beastDying||isDead) return;
+      damageBeast(heroAtk()*3*power, true, beast.x+(Math.random()-0.5)*30, beast.y);
+      spawnParticles(beast.x, beast.y, '#ffeb44', 8);
+    }, i*100);
+  } else if (id === 'meteor') {
+    for (let i=0;i<5;i++) setTimeout(()=>{
+      if(beastDying||isDead) return;
+      const x = 60 + Math.random()*(W-120);
+      // 在猛兽位置爆炸
+      damageBeast(heroAtk()*5*power, true, beast.x, beast.y);
+      spawnParticles(beast.x, beast.y, '#ff8844', 15);
+      floaters.push({x:beast.x, y:beast.y, vy:-1, text:'☄️', color:'#ff8844', size:30, life:500, maxLife:500});
+    }, i*200);
+  } else if (id === 'spinshot') {
+    // 螺旋穿透弹
+    for (let i=0;i<12;i++) setTimeout(()=>{
+      const ang = i * Math.PI/6 + Date.now()/200;
+      heroBullets.push({x:hero.x, y:hero.y, vx:Math.cos(ang)*0.5, vy:Math.sin(ang)*0.5, r:8, dmg:heroAtk()*1.5*power, crit:false, color:'#88ffcc', pierce:true});
+    }, i*50);
+  } else if (id === 'shield') {
+    buffs.shield = Date.now() + (4000 + power*500);
+  } else if (id === 'firebreath') {
+    // 前方扇形伤害
+    for (let i=0;i<20;i++) setTimeout(()=>{
+      if(beastDying||isDead)return;
+      const ang = -Math.PI/2 + (Math.random()-0.5)*0.6;
+      heroBullets.push({x:hero.x, y:hero.y-20, vx:Math.cos(ang)*0.5, vy:Math.sin(ang)*0.5, r:10, dmg:heroAtk()*1.2*power, crit:true, color:'#ff6622', spirit:false});
+    }, i*40);
+  } else if (id === 'clone') {
+    clones.push({x:hero.x-60, y:hero.y, offsetX:-60, life:10000, alive:true});
+    clones.push({x:hero.x+60, y:hero.y, offsetX:60, life:10000, alive:true});
+  } else if (id === 'laser') {
+    // 纵贯激光：瞬间对猛兽巨量伤害
+    damageBeast(heroAtk()*15*power, true, beast.x, beast.y);
+    spawnParticles(beast.x, beast.y, '#ff66cc', 30);
+    // 激光视效用粒子
+    for (let i=0; i<H; i+=8) {
+      particles.push({x:hero.x, y:hero.y-i, vx:0, vy:-0.1, r:5, color:'#ff66cc', life:400, maxLife:400});
+    }
+  } else if (id === 'revive') {
+    // 凤凰是被动技能，主动按时也回血
+    const amt = Math.floor(hero.maxHp * 0.5);
+    hero.hp = Math.min(hero.maxHp, hero.hp + amt);
+    buffs.reviveUsed = false;
+    floaters.push({x:hero.x, y:hero.y-10, vy:-1, text:'🔥重置复活', color:'#ffaa44', size:18, life:1000, maxLife:1000});
+  } else if (id === 'blackhole') {
+    // 把所有敌弹聚到一点
+    const tx = beast.x, ty = beast.y;
+    enemyBullets.forEach(b=>{
+      const dx = tx-b.x, dy = ty-b.y;
+      const len = Math.hypot(dx,dy)||1;
+      b.vx = dx/len * 0.5; b.vy = dy/len * 0.5;
+    });
+    setTimeout(()=>{
+      if(beastDying||isDead) return;
+      damageBeast(heroAtk()*10*power + enemyBullets.length*50, true, beast.x, beast.y);
+      spawnParticles(beast.x, beast.y, '#aa00ff', 40);
+      enemyBullets = [];
+    }, 800);
+  } else if (id === 'stars') {
+    for (let i=0;i<20;i++) setTimeout(()=>{
+      if(beastDying||isDead) return;
+      damageBeast(heroAtk()*1.5*power, true, beast.x+(Math.random()-0.5)*60, beast.y+(Math.random()-0.5)*60);
+      spawnParticles(beast.x+(Math.random()-0.5)*60, beast.y+(Math.random()-0.5)*60, '#ffeb44', 6);
+    }, i*80);
+  }
+}
+
+// ============ HUD ============
+function updateHUD(){
+  document.getElementById('coins').textContent = fmt(state.coins);
+  document.getElementById('levelNum').textContent = state.levelIdx + 1;
+  document.getElementById('combo').textContent = combo;
+  const heroPct = Math.max(0, hero.hp/hero.maxHp*100);
+  document.getElementById('heroHpFill').style.width = heroPct + '%';
+  document.getElementById('heroHpText').textContent = fmt(Math.max(0,hero.hp))+'/'+fmt(hero.maxHp);
+  const beastPct = Math.max(0, beast.hp/beast.maxHp*100);
+  document.getElementById('beastHpFill').style.width = beastPct + '%';
+  document.getElementById('beastHpText').textContent = beast.name+' '+fmt(Math.max(0,beast.hp))+'/'+fmt(beast.maxHp);
+  document.getElementById('ultFill').style.width = ultCharge + '%';
+  document.getElementById('ultText').textContent = '必杀技 '+Math.floor(ultCharge)+'%';
+  const ultBtn = document.getElementById('ultBtn');
+  if (ultCharge >= 100) ultBtn.classList.add('ready'); else ultBtn.classList.remove('ready');
+
+  // 新精灵提示
+  const badge = document.getElementById('spiritBadge');
+  if (state.newSpiritKey) { badge.style.display='inline-block'; badge.textContent='New'; }
+  else badge.style.display = 'none';
+}
+
+function updateSkillSlotsUI(){
+  for (let i=0;i<3;i++) {
+    const slot = document.getElementById('slot'+i);
+    const key = state.equippedSpirits[i];
+    if (!key) {
+      slot.className = 'skill-slot empty';
+      slot.querySelector('.icon').textContent = '＋';
+      slot.querySelector('.name').textContent = '空';
+      slot.querySelector('.cd-overlay').textContent = '';
+      continue;
+    }
+    const info = SPIRIT_DATA[key];
+    if (!info) continue;
+    const skill = info.skill;
+    slot.classList.remove('empty');
+    slot.querySelector('.icon').textContent = skill.icon;
+    slot.querySelector('.name').textContent = skill.name;
+    const rem = spiritCDs[i] - Date.now();
+    if (rem > 0) {
+      slot.classList.add('cd');
+      slot.classList.remove('ready');
+      slot.querySelector('.cd-overlay').textContent = Math.ceil(rem/1000);
+    } else {
+      slot.classList.remove('cd');
+      slot.classList.add('ready');
+    }
+  }
+}
+
+// ============ 胜负 ============
+function victory(){
+  if (isDead) return;
+  isPaused = true;
+  state.coins += beast.coin;
+  const bonus = (state.levelIdx+1) * 30;
+  state.coins += bonus;
+  // 获得精灵
+  const k = beast.spirit;
+  if (!state.spiritOwn[k]) state.spiritOwn[k] = { count:0, stage:1 };
+  state.spiritOwn[k].count++;
+  state.newSpiritKey = k;
+  // 自动装备到空槽（如果该种类首次获得）
+  if (state.spiritOwn[k].count === 1) {
+    const slot = state.equippedSpirits.indexOf(null);
+    if (slot >= 0) state.equippedSpirits[slot] = k;
+  }
+  document.getElementById('luTitle').textContent = '🏆 第 '+(state.levelIdx+1)+' 关通关!';
+  document.getElementById('luText').textContent = '击败了 '+beast.name;
+  document.getElementById('luCoin').textContent = fmt(beast.coin + bonus);
+  document.getElementById('luSpirit').textContent = k + ' ('+SPIRIT_DATA[k].name+') ×'+state.spiritOwn[k].count;
+  document.getElementById('levelup').classList.add('show');
+  save();
+}
+
+function nextLevel(){
+  document.getElementById('levelup').classList.remove('show');
+  state.levelIdx++;
+  save();
+  isPaused = false;
+  initBattle();
+}
+
+function gameOver(){
+  if (isDead) return;
+  isDead = true; isPaused = true;
+  spawnParticles(hero.x, hero.y, '#ff4444', 30);
+  setTimeout(()=>{
+    document.getElementById('goText').textContent = '在第 '+(state.levelIdx+1)+' 关倒下了';
+    document.getElementById('gameover').classList.add('show');
+  }, 600);
+}
+
+function retry(){
+  document.getElementById('gameover').classList.remove('show');
+  state.coins = Math.floor(state.coins * 0.8);
+  save();
+  isPaused = false;
+  initBattle();
+}
+
+// ============ 商店 ============
+function openModal(type){
+  const m = document.getElementById('modal');
+  const title = document.getElementById('modalTitle');
+  const body = document.getElementById('modalBody');
+  body.innerHTML = '';
+  isPaused = true;
+  if (type === 'shop') {
+    title.textContent = '⚔ 升级英雄';
+    UPGRADES.forEach(u=>{
+      const lvl = state.upgrades[u.id];
+      const cost = upgradeCost(u);
+      const maxed = u.max && lvl >= u.max;
+      const can = state.coins >= cost && !maxed;
+      let val='';
+      if(u.id==='atk')val='当前攻击 '+heroAtk();
+      else if(u.id==='hp')val='当前HP '+heroMaxHp();
+      else if(u.id==='rate')val='射击间隔 '+shootInterval()+'ms';
+      else if(u.id==='crit')val='暴击率 '+(lvl*3)+'%';
+      else if(u.id==='mult')val='子弹数 '+bulletCount();
+      body.innerHTML += `<div class="item-row">
+        <div class="icon">${u.icon}</div>
+        <div class="info"><div class="name">${u.name} Lv.${lvl}${u.max?'/'+u.max:''}</div>
+        <div class="desc">${u.desc}<br>${val}</div></div>
+        <button class="buy-btn" ${can?'':'disabled'} onclick="buyUpgrade('${u.id}')">${maxed?'已满':'💰'+fmt(cost)}</button></div>`;
+    });
+  } else if (type === 'costume') {
+    title.textContent = '👕 服装店';
+    COSTUMES.forEach(c=>{
+      const owned = state.costumes.includes(c.id);
+      const equipped = state.equippedCostume === c.id;
+      const can = state.coins >= c.cost;
+      let btn;
+      if(equipped)btn=`<button class="buy-btn equipped">装备中</button>`;
+      else if(owned)btn=`<button class="buy-btn" onclick="equipCostume('${c.id}')">换上</button>`;
+      else btn=`<button class="buy-btn" ${can?'':'disabled'} onclick="buyCostume('${c.id}')">💰${fmt(c.cost)}</button>`;
+      body.innerHTML += `<div class="item-row">
+        <div class="icon">${c.icon}</div>
+        <div class="info"><div class="name">${c.name}</div><div class="desc">${c.bonus}</div></div>${btn}</div>`;
+    });
+  } else if (type === 'spirits') {
+    state.newSpiritKey = null;
+    title.textContent = '🧚 精灵图鉴';
+    // 出战槽展示
+    let slotHtml = '<div style="background:rgba(255,204,68,0.1);border:2px solid #ffcc44;border-radius:12px;padding:8px;margin-bottom:10px;"><div style="text-align:center;font-size:12px;color:#ffcc44;margin-bottom:6px;">⚡ 出战槽（最多3只主动技能）</div><div style="display:flex;gap:8px;justify-content:center;">';
+    for (let i=0;i<3;i++) {
+      const k = state.equippedSpirits[i];
+      if (k) {
+        const info = SPIRIT_DATA[k];
+        slotHtml += `<div style="text-align:center;background:rgba(0,0,0,0.4);border:2px solid #66aaff;border-radius:10px;padding:6px;min-width:80px;cursor:pointer;" onclick="unequipSpirit(${i})">
+          <div style="font-size:24px;">${spiritStageEmoji(k)}</div>
+          <div style="font-size:10px;color:#ffeeaa;">${info.skill.name}</div>
+          <div style="font-size:9px;color:#ff8888;">点击卸下</div>
+        </div>`;
+      } else {
+        slotHtml += `<div style="text-align:center;background:rgba(0,0,0,0.2);border:2px dashed #666;border-radius:10px;padding:6px;min-width:80px;color:#666;">
+          <div style="font-size:24px;">＋</div>
+          <div style="font-size:10px;">槽 ${i+1}</div></div>`;
+      }
+    }
+    slotHtml += '</div></div>';
+    body.innerHTML += slotHtml;
+
+    // 全部精灵图鉴
+    const keys = Object.keys(SPIRIT_DATA);
+    keys.forEach(k=>{
+      const own = state.spiritOwn[k];
+      const info = SPIRIT_DATA[k];
+      if (!own) {
+        // 未获得显示问号
+        body.innerHTML += `<div class="item-row" style="opacity:0.4;">
+          <div class="icon">❓</div>
+          <div class="info"><div class="name">??? 精灵</div>
+          <div class="desc">击败对应猛兽解锁</div></div></div>`;
+        return;
+      }
+      const stage = own.stage;
+      const stageInfo = info.stages[stage-1];
+      const canEvolve = stage < 3;
+      const req = canEvolve ? EVOLVE_REQ[stage] : null;
+      const evolveOk = canEvolve && own.count >= req.count && state.coins >= req.cost;
+      const equipped = state.equippedSpirits.includes(k);
+      const equipSlot = state.equippedSpirits.indexOf(null);
+
+      let evolveBtn = '';
+      if (canEvolve) {
+        evolveBtn = `<button class="buy-btn evolve" ${evolveOk?'':'disabled'} onclick="evolveSpirit('${k}')">
+          进化 (${own.count}/${req.count}+💰${req.cost})
+        </button>`;
+      } else {
+        evolveBtn = `<button class="buy-btn" disabled>★MAX</button>`;
+      }
+      let equipBtn = '';
+      if (equipped) equipBtn = `<button class="buy-btn equipped">出战中</button>`;
+      else if (equipSlot >= 0) equipBtn = `<button class="buy-btn equip" onclick="equipSpirit('${k}',${equipSlot})">出战</button>`;
+      else equipBtn = `<button class="buy-btn" disabled>槽满</button>`;
+
+      body.innerHTML += `<div class="item-row">
+        <div class="icon">${stageInfo.e}</div>
+        <div class="info">
+          <div class="name">${info.name} <span class="stage-tag stage-${stage}">Lv.${stage}</span></div>
+          <div class="desc">${info.skill.icon} <b>${info.skill.name}</b> (CD ${info.skill.cd/1000}s)<br>${info.skill.desc}<br>
+          <span style="color:#88ffcc;">拥有 ×${own.count} · 单发伤害 ${fmt(spiritDmg(k))}</span></div>
+        </div>
+        <div class="btns">${equipBtn}${evolveBtn}</div>
+      </div>`;
+    });
+  } else if (type === 'help') {
+    title.textContent = '❓ 玩法说明';
+    body.innerHTML = `<div style="line-height:1.7;font-size:13px;">
+      <p>🕹 <b>移动</b>：手指拖动英雄（不必精准点）/ WASD / 方向键</p>
+      <p>🔫 <b>自动射击</b>：自动向上射击，升级攻速/多重弹</p>
+      <p>⚠️ <b>蓄力警告</b>：猛兽红光时要跑位</p>
+      <p>💎 <b>掉落物</b>：💰金币 ❤️回血 ⚡必杀能量</p>
+      <p>⚡ <b>必杀技</b>：满 100% 按【放！】清屏爆发</p>
+      <hr style="border-color:#444;margin:8px 0;">
+      <p>🧚 <b>精灵系统（新）</b>：</p>
+      <p>· 通关获得对应精灵，<b>同种精灵叠加伤害</b></p>
+      <p>· 每种精灵有<b>专属主动技能</b>，在【精灵】页装备到出战槽</p>
+      <p>· 战斗中点击下方 3 个槽位（或按 1/2/3）释放技能</p>
+      <p>· <b>三阶进化</b>：累计收集 + 金币可进化，造型威力大升级</p>
+      <p>· 试试搭配：🐨冰冻+😼连斩 / 🦛护盾+🐲龙息 / 🐤凤凰(被动复活)</p>
+    </div>`;
+  }
+  m.classList.add('show');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('show'); isPaused=false; }
+function buyUpgrade(id){
+  const u=UPGRADES.find(x=>x.id===id); const cost=upgradeCost(u);
+  if(state.coins<cost)return; if(u.max&&state.upgrades[id]>=u.max)return;
+  state.coins-=cost; state.upgrades[id]++;
+  if(id==='hp'){ hero.maxHp=heroMaxHp(); hero.hp=hero.maxHp; }
+  save(); openModal('shop');
+}
+function buyCostume(id){
+  const c=COSTUMES.find(x=>x.id===id); if(state.coins<c.cost)return;
+  state.coins-=c.cost; state.costumes.push(id); state.equippedCostume=id;
+  hero.maxHp=heroMaxHp(); hero.hp=hero.maxHp;
+  save(); openModal('costume');
+}
+function equipCostume(id){
+  state.equippedCostume=id;
+  const oldMax = hero.maxHp;
+  hero.maxHp = heroMaxHp();
+  hero.hp = Math.min(hero.maxHp, Math.floor(hero.hp * hero.maxHp / oldMax));
+  save(); openModal('costume');
+}
+function equipSpirit(key, slot){
+  state.equippedSpirits[slot] = key;
+  // 重新初始化战斗中的精灵
+  initSpirits();
+  save(); openModal('spirits');
+}
+function unequipSpirit(slot){
+  state.equippedSpirits[slot] = null;
+  initSpirits();
+  save(); openModal('spirits');
+}
+function initSpirits(){
+  spirits = [];
+  state.equippedSpirits.forEach((key, i)=>{
+    if (key && state.spiritOwn[key]) {
+      spirits.push({
+        key, emoji: spiritStageEmoji(key),
+        dmg: spiritDmg(key),
+        angle: i * Math.PI*2/3, radius: 60,
+        shootCD: 500, lastShoot: 0, slotIdx: i,
+      });
+    }
+  });
+}
+function evolveSpirit(key){
+  const own = state.spiritOwn[key];
+  if (!own || own.stage >= 3) return;
+  const req = EVOLVE_REQ[own.stage];
+  if (own.count < req.count || state.coins < req.cost) return;
+  state.coins -= req.cost;
+  own.stage++;
+  showToast('🎊 '+SPIRIT_DATA[key].name+' 进化到 Lv.'+own.stage+'!');
+  // 更新战斗精灵
+  initSpirits();
+  save(); openModal('spirits');
+}
+
+function showToast(text){
+  const t = document.getElementById('toast');
+  t.textContent = text;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+// ============ 启动 ============
+load();
+resizeCanvas();
+initBattle();
+requestAnimationFrame(loop);
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9ffb4625ec2d5027',t:'MTc3OTQ0NzE3NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
