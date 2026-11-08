@@ -264,3 +264,7 @@ body.material-viewing{
     border-bottom:1px solid var(--line);
   }
 }
+
+@media (max-width: 620px) and (orientation: portrait) {
+ .material-card > img, .material-card > video {object-fit: contain}
+}

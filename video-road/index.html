@@ -12,8 +12,11 @@
 .map-panel footer{font-size:11px;color:#bdbaca;padding-top:15px}
 #empty{padding:20px;max-width:100%}#playlist{background:#273551;color:#fff;border:1px solid #ffffff55;border-radius:8px;padding:7px;max-width:200px}
 @media(max-width:720px){.map-content{grid-template-columns:1fr}.top-tools{flex-wrap:wrap;justify-content:end;max-width:70%}.top-tools button{padding:7px;font-size:10px}.map-panel{padding:15px}.map-panel header{flex-direction:column}}
+@media (max-width: 720px) and (orientation: portrait) {
+ #world {position: absolute;left: 0;top: calc(50% - 40px);width: 100%;height: auto;aspect-ratio: 16 / 9;transform: translateY(-50%)}
+}
 </style><link rel="stylesheet" href="../diaoge.css?v=20261028-ip1"></head><body>
-<div id="app"><canvas id="world" aria-label="海岸到森林的连续互动公路"></canvas><button type="button" id="road-diaoge" class="diaoge-preview road-bird" aria-label="点击路边的雕哥" hidden><img src="../assets/diaoge/front_sample.png" alt=""><canvas aria-hidden="true"></canvas></button><span id="road-diaoge-note" class="diaoge-road-note" role="status" hidden>好巧，又见面了。 — 雕哥</span>
+<div id="app"><canvas id="world" aria-label="海岸到森林的连续互动公路"></canvas><button type="button" id="road-diaoge" class="diaoge-preview road-bird" aria-label="点击路边的雕哥" hidden><img data-src="../assets/diaoge/front_sample.png" alt=""><canvas aria-hidden="true"></canvas></button><span id="road-diaoge-note" class="diaoge-road-note" role="status" hidden>好巧，又见面了。 — 雕哥</span>
  <header class="top"><strong>DANNY<span>+</span></strong><small>ON THE ROAD · CINEMATIC DRIVE · SCENIC EDITION</small><p id="location">黄昏海岸 · 沿路向前</p></header>
  <div class="top-tools"><button id="btn-map" title="查看沿途作品入口">⌘ 路线</button><button id="btn-guide" title="操作帮助">? 帮助</button><button id="btn-mute">♫ MUSIC</button><button id="btn-full">⛶ FULL</button><button id="btn-exit" title="返回六面主页">↩ 返回</button></div>
  <div class="toast" id="toast"></div>
@@ -26,5 +29,5 @@
 <div id="map-content" class="map-content"></div><footer>18 个作品入口 + 10 段回归风景 · 视频素材始终留在本地</footer>
 </div></div>
 <div class="screen" id="viewer" hidden><div class="movie" role="dialog" aria-modal="true" aria-labelledby="movie-title"><header><h2 id="movie-title">作品空位</h2><button id="close">✕ 返回公路</button></header><div class="film"><p id="empty">YOUR FILM GOES HERE<br><small>本地配置视频文件，无需上传</small></p><video id="video" controls playsinline hidden></video></div><footer><small id="slot-info">作品入口已接通</small><div><select id="playlist" hidden></select><label for="pick-video">＋ 临时播放本地视频</label><input type="file" accept="video/*" id="pick-video" hidden></div></footer></div></div>
-<script src="content/settings.js?v=20261019-media1"></script><script src="content/portals.js?v=20261019-media1"></script><script src="content/works.js?v=20261019-media1"></script><script src="content/radio.js?v=20261019-media2"></script><script src="content/scenic_route.js?v=20261019-media1"></script><script src="../assets/diaoge/diaoge-pose.js?v=20261028-ip1"></script><script src="app.js?v=20261028-diaoge1"></script>
+<script src="content/settings.js?v=20261019-media1"></script><script src="content/portals.js?v=20261019-media1"></script><script src="content/works.js?v=20261108-videofix1"></script><script src="content/radio.js?v=20261019-media2"></script><script src="content/scenic_route.js?v=20261019-media1"></script><script src="../assets/diaoge/diaoge-pose.js?v=20261028-ip1"></script><script src="app.js?v=20261108-roadfast1"></script>
 </body></html>

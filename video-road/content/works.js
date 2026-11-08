@@ -4,6 +4,8 @@ window.DANNY_WORKS = [
     "title": "01 · 海上的第一幕",
     "portal": "sea-balloon",
     "file": "media/video/danny-motion.mp4",
+    "desktopFile": "media/video/desktop/danny-motion-desktop.mp4",
+    "mobileFile": "media/video/mobile/danny-motion-mobile.mp4",
     "poster": "media/video/danny-motion-poster.webp",
     "category": "品牌视频"
   },
@@ -12,6 +14,8 @@ window.DANNY_WORKS = [
     "title": "02 · 海崖的故事",
     "portal": "coast-cliff",
     "file": "media/video/cockroach-party.mp4",
+    "desktopFile": "media/video/desktop/cockroach-party-desktop.mp4",
+    "mobileFile": "media/video/mobile/cockroach-party-mobile.mp4",
     "poster": "media/video/cockroach-party-poster.jpg",
     "category": "插画动画"
   },
@@ -20,6 +24,8 @@ window.DANNY_WORKS = [
     "title": "03 · 穿越隧道",
     "portal": "tunnel-radio",
     "file": "media/video/hailuo-core-idea.mp4",
+    "desktopFile": "media/video/desktop/hailuo-core-idea-desktop.mp4",
+    "mobileFile": "media/video/mobile/hailuo-core-idea-mobile.mp4",
     "poster": "media/video/hailuo-core-idea-poster.jpg",
     "category": "短片"
   },
@@ -28,6 +34,8 @@ window.DANNY_WORKS = [
     "title": "04 · 天空航线",
     "portal": "sky-plane",
     "file": "media/video/portfolio-clip-01.mp4",
+    "desktopFile": "media/video/desktop/portfolio-clip-01-desktop.mp4",
+    "mobileFile": "media/video/mobile/portfolio-clip-01-mobile.mp4",
     "poster": "media/video/portfolio-clip-01-poster.jpg",
     "category": "广告视频"
   },
@@ -36,6 +44,8 @@ window.DANNY_WORKS = [
     "title": "05 · 来自宇宙的信",
     "portal": "forest-ufo",
     "file": "media/video/portfolio-clip-02.mp4",
+    "desktopFile": "media/video/desktop/portfolio-clip-02-desktop.mp4",
+    "mobileFile": "media/video/mobile/portfolio-clip-02-mobile.mp4",
     "poster": "media/video/portfolio-clip-02-poster.jpg",
     "category": "AI实验"
   },

@@ -1,5 +1,5 @@
-import { projects, getProject } from './projects.js?v=20261030-v03';
-import { productionPage, initProduction } from './idea-v03-host.js?v=20261030-phone3';
+import { projects, getProject } from './projects.js?v=20261108-all1';
+import { productionPage, initProduction } from './idea-v03-host.js?v=20261108-portrait1';
 import { ipPage, initIpPage } from './ip-stage.js?v=20261018-ipstory6';
 import { Dice } from './dice.js?v=20261005-0101';
 import { voyagePage, initVoyage } from './voyage.js?v=20261019-entry1';
@@ -121,7 +121,7 @@ function catalog(){
   return `<section class="page catalog-page"><div class="page-topline"><span class="eyebrow">THE INDEX / 06 SIDES</span><a class="back-link" href="#/">回到多面体</a></div>
     <div class="catalog-header"><h1 class="page-title">挑你想看的<em>。</em></h1><p>一些已经做出来的东西，<br>和一些还在往前走的想法。</p></div>
     <div class="catalog-list">${projects.map(p=>`<a class="catalog-row" href="${projectHref(p)}" style="--row-accent:${p.color}" data-cover="${p.thumbnail||p.cover}" aria-label="查看${p.label}，${p.status}"><span class="row-number">${p.number}</span><span class="row-title">${p.label}<small>${p.english}</small></span><span class="row-status"><i aria-hidden="true"></i>${p.status}</span><span class="row-open">打开</span></a>`).join('')}</div>
-    <img class="catalog-hover-image" id="catalog-preview" src="assets/expressive-cover.png" alt="" aria-hidden="true" width="330" height="206">
+    <img class="catalog-hover-image" id="catalog-preview" alt="" aria-hidden="true" width="330" height="206">
     <div class="catalog-bottom"><span>作品、工具与实验，会继续放进来。</span><span>每一个项目，都是认识我的另一种方式。</span></div>
   </section>`;
 }
@@ -131,21 +131,25 @@ function labPage(){
 }
 
 function roadPage(){
-  return `<section class="road-host" aria-label="DANNY · ON THE ROAD"><div class="road-cover" id="road-cover" role="dialog" aria-modal="true" aria-labelledby="road-cover-title"><img src="./assets/portfolio/danny-road-cover.png" alt="DANNY ON THE ROAD 沿途放映海岸公路日落封面"><div class="road-cover-shade" aria-hidden="true"></div><div class="road-cover-copy"><span class="sr-only" id="road-cover-title">DANNY · ON THE ROAD · 沿途放映</span><button id="road-enter" type="button" aria-label="进入沿途放映"><span class="sr-only">PRESS ENTER</span></button></div></div><iframe id="road-frame" data-src="./video-road/index.html?v=20261028-diaoge1&amp;autoplay=1" title="DANNY · ON THE ROAD" allow="fullscreen; autoplay" hidden></iframe></section>`;
+  return `<section class="road-host" aria-label="DANNY · ON THE ROAD"><div class="road-cover" id="road-cover" role="dialog" aria-modal="true" aria-labelledby="road-cover-title"><picture><source media="(max-width: 720px)" type="image/webp" srcset="./assets/portfolio/danny-road-cover-mobile.webp"><source type="image/webp" srcset="./assets/portfolio/danny-road-cover-desktop.webp"><img src="./assets/portfolio/danny-road-cover.png" alt="DANNY ON THE ROAD 沿途放映海岸公路日落封面"></picture><div class="road-cover-shade" aria-hidden="true"></div><div class="road-cover-copy"><span class="sr-only" id="road-cover-title">DANNY · ON THE ROAD · 沿途放映</span><button id="road-enter" type="button" aria-label="进入沿途放映"><span class="sr-only">PRESS ENTER</span></button></div></div><iframe id="road-frame" data-src="./video-road/index.html?v=20261108-videofix1&amp;autoplay=1" title="DANNY · ON THE ROAD" allow="fullscreen; autoplay" hidden></iframe></section>`;
 }
 
 function initRoad(){
   const frame=document.getElementById('road-frame');
-  const cover=document.getElementById('road-cover'),enter=document.getElementById('road-enter');
+  const cover=document.getElementById('road-cover'),enter=document.getElementById('road-enter'),signal=pageAbort.signal;
   if(!frame||!cover||!enter)return;
-  const launch=()=>{cover.hidden=true;frame.hidden=false;if(!frame.getAttribute('src'))frame.src=frame.dataset.src;frame.focus({preventScroll:true});};
-  enter.addEventListener('click',launch,{signal:pageAbort.signal});
-  window.addEventListener('keydown',event=>{if(!cover.hidden&&(event.key==='Enter'||event.key===' ')){event.preventDefault();launch();}},{signal:pageAbort.signal});
+  let revealTimer=0;
+  const reveal=()=>{if(signal.aborted||cover.hidden)return;clearTimeout(revealTimer);cover.hidden=true;frame.removeAttribute('aria-hidden');announce.textContent='公路已打开。';frame.focus({preventScroll:true});};
+  const launch=()=>{if(enter.disabled)return;enter.disabled=true;enter.dataset.loading='true';enter.setAttribute('aria-label','正在准备公路');announce.textContent='正在准备公路。';frame.setAttribute('aria-hidden','true');frame.hidden=false;if(!frame.getAttribute('src'))frame.src=frame.dataset.src;revealTimer=setTimeout(reveal,15000);};
+  signal.addEventListener('abort',()=>clearTimeout(revealTimer),{once:true});
+  enter.addEventListener('click',launch,{signal});
+  window.addEventListener('keydown',event=>{if(!cover.hidden&&(event.key==='Enter'||event.key===' ')){event.preventDefault();launch();}},{signal});
   enter.focus({preventScroll:true});
   window.addEventListener('message',event=>{
     if(event.origin!==location.origin||event.source!==frame.contentWindow||event.data?.source!=='DANNY_ROAD')return;
+    if(event.data.type==='DANNY_ROAD_SCENE_READY')reveal();
     if(event.data.type==='DANNY_ROAD_EXIT'){skipCurtainOnce=true;location.hash='#/';}
-  },{signal:pageAbort.signal});
+  },{signal});
 }
 
 function initLab(){
@@ -475,7 +479,7 @@ function render(){
   document.body.classList.remove('world-transitioning');
   dice?.destroy();dice=null;voyage?.destroy();voyage=null;pageAbort?.abort();pageAbort=new AbortController();
   const hash=location.hash||'#/',path=hash.slice(1).replace(/\/$/,'')||'/';
-  if(path==='/project/avatar'){location.replace('./resonance/index.html?v=20261028-back1');return;}
+  if(path==='/project/avatar'){location.replace('./resonance/index.html?v=20261108-all1');return;}
   if(path==='/project/layout'){location.hash='#/lab';return;}
   document.body.classList.toggle('idea-route',path==='/project/production');
   document.body.classList.toggle('lab-route',path==='/lab');

@@ -2,7 +2,7 @@
 export function productionPage(){
   return `<section class="idea-host" aria-label="DANNY 想法到实物">
     <div class="idea-host-bar"><span>DANNY / 想法到实物</span><a href="#/projects">← 返回项目目录</a></div>
-    <iframe id="idea-v03-frame" src="./idea-v03/index.html?v=20261030-phone3" title="DANNY 想法到实物 · V03"></iframe>
+    <iframe id="idea-v03-frame" src="./idea-v03/index.html?v=20261108-portrait1" title="DANNY 想法到实物 · V03"></iframe>
   </section>`;
 }
 

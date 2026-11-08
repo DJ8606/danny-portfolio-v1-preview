@@ -55,7 +55,7 @@
   document.getElementById('description').textContent=exp.description;
   for(const button of nav.children){if(button.dataset.version===active)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');}
   frame=document.createElement('iframe');frame.title=exp.version+' · '+exp.title;
-  frame.allow='autoplay; fullscreen';frame.src='versions/'+exp.id+'.html';
+  frame.allow='autoplay; fullscreen';frame.src=exp.id==='v07'&&location.protocol!=='file:'?'versions/v07-web.html':'versions/'+exp.id+'.html';
   const thisFrame=frame;frame.addEventListener('load',()=>{if(frame===thisFrame)loading.hidden=true;});main.append(frame);
   const hash='#'+exp.id;if(location.hash!==hash){history[push?'pushState':'replaceState'](null,'',hash);}
  }

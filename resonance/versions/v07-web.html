@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark"><title>DANNY · 共鸣实验室 V07｜同一段旋律，不同的心跳</title>
+<style>
+:root{--bg:#0d1418;--board:#172329;--board2:#1a2b30;--line:#30464a;--text:#f1f4ef;--muted:#9aacaa;--mint:#9fe6cd;--peach:#f1bd9c;--lavender:#b5a7e5;}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:radial-gradient(ellipse at 45% -5%,#284448 0%,transparent 58%),var(--bg);color:var(--text)}
+button{font:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #ddfbed;outline-offset:3px}
+.frame{max-width:1110px;margin:auto;padding:34px 28px 60px}
+nav{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #3a5053;padding-bottom:20px;gap:10px}.logo{font-size:13px;font-weight:800;letter-spacing:.16em;white-space:nowrap}.logo span{color:var(--mint);font-size:24px;vertical-align:middle;margin-right:8px}.ver{font-size:12px;color:#a8bbb7}
+header{padding:48px 0 31px}.kicker{font-size:12px;font-weight:700;letter-spacing:.19em;color:var(--peach)}h1{font-size:clamp(32px,5vw,60px);font-weight:570;letter-spacing:-.045em;line-height:1.17;margin:15px 0 18px}.desc{max-width:740px;color:#b9ceca;line-height:1.85;font-size:15px;margin:0}.desc strong{color:var(--text)}
+.board{background:linear-gradient(165deg,#213338,#15232a 80%);border:1px solid #3a5457;border-radius:25px;overflow:hidden;box-shadow:0 35px 100px #0003}
+.player{padding:34px 38px 24px;background:radial-gradient(ellipse at 52% 95%,#285a565a,transparent 65%)}.toprow{display:flex;justify-content:space-between;align-items:start;gap:14px}.tiny{font-size:11px;letter-spacing:.15em;font-weight:700;color:#a1c7bc}.selection{font-size:clamp(25px,3.3vw,38px);font-weight:550;letter-spacing:-.035em;margin:10px 0 10px}.subtitle{color:#bdd0ca;line-height:1.65;font-size:13px;min-height:46px;max-width:650px}.source{border:1px solid #51736f;color:#a7d6c9;border-radius:30px;padding:9px 12px;font-size:11px;white-space:nowrap}
+#wave{display:flex;align-items:center;height:138px;gap:3px;margin:22px 0 4px;cursor:pointer;position:relative;touch-action:pan-y}#wave .bar{flex:1;min-width:1px;background:linear-gradient(180deg,#a5ead0,#4c8e89);border-radius:3px;opacity:.55;pointer-events:none}#wave .bar.live{opacity:1;background:linear-gradient(180deg,#f8dbb8,#bcb5db)}
+.time{display:flex;justify-content:space-between;font-size:12px;color:#a4beb8;font-variant-numeric:tabular-nums}.transport{display:flex;gap:15px;align-items:center;margin-top:23px;flex-wrap:wrap}.play{background:var(--mint);color:#102625;border:0;padding:15px 28px;border-radius:12px;font-size:16px;font-weight:750;min-width:164px}.play:hover{background:#c0f7e7}.download{background:#2d4448;border:1px solid #598178;color:#e2f3ed;padding:14px 20px;border-radius:11px;font-weight:650}.download:hover{background:#39545a}.hint{font-size:12px;color:#a8c2bd}.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;padding:21px;background:#111d22;border-top:1px solid #355052}.mode{background:#1c2e33;border:1px solid #344d51;text-align:left;border-radius:17px;padding:22px 20px;min-height:157px;color:var(--text);transition:border-color .12s,background .12s}.mode:hover{border-color:#80b0a6}.mode.active{background:#2a4747;border-color:#9fe6cd;box-shadow:inset 0 0 0 1px #96e4cc45}.letter{font-weight:800;letter-spacing:.1em;font-size:12px;color:var(--mint)}.mode h3{margin:9px 0 10px;font-size:19px;font-weight:620}.mode p{margin:0;color:#adc0bd;font-size:12px;line-height:1.75}.mode[data-i="1"] .letter{color:var(--peach)}.mode[data-i="2"] .letter{color:var(--lavender)}
+.footnote{border-top:1px solid #293e41;padding:16px 22px 20px;font-size:12px;line-height:1.8;color:#a5bebb;background:#132024}.thought{margin-top:25px;border:1px solid #355054;border-radius:19px;padding:24px 28px;display:flex;gap:22px;align-items:start}.thought strong{white-space:nowrap;font-size:14px;color:#e5efe9}.thought p{margin:0;font-size:13px;color:#bdcfc8;line-height:1.8}.dots{display:flex;gap:6px;padding-top:4px}.dots i{width:8px;height:8px;background:var(--mint);border-radius:50%;opacity:.65}.dots i:nth-child(2){background:var(--peach)}.dots i:nth-child(3){background:var(--lavender)}
+footer{font-size:11px;color:#788d8a;margin-top:20px;line-height:1.8}
+@media(max-width:780px){.frame{padding:18px 12px 48px}.player{padding:24px 20px 22px}.modes{grid-template-columns:1fr;padding:13px}.mode{min-height:0;padding:16px 18px}.mode h3{margin:4px 0}.mode p{max-width:100%}.toprow{flex-direction:column}.source{align-self:start}#wave{height:105px;gap:2px}.thought{flex-direction:column;gap:12px}header{padding:31px 0 20px}.desc{font-size:14px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head>
+<body><div class="frame"><nav><div class="logo"><span>◈</span> DANNY · RESONANCE LAB</div><div class="ver">EXPERIMENT 07 / RHYTHM</div></nav>
+<header><div class="kicker">ONE MELODY · THREE FEELINGS</div><h1>同一段旋律，<br>换一种心跳。</h1><p class="desc">这次不改你之前 A 版的旋律。只给它<strong>加上鼓点、低音和情绪变化</strong>，试听三个版本，看看原本随意的旋律会不会产生新的感觉。</p></header>
+<main class="board"><div class="player"><div class="toprow"><div><div class="tiny">NOW LISTENING / 当前版本</div><div class="selection" id="nowTitle">A · 原始旋律</div><div class="subtitle" id="nowDesc">完全保留你上次录音的声音，不加节拍，也不调整停顿。</div></div><div class="source">取自你上传的 A 版录音 · 40.7 秒</div></div>
+<div id="wave" role="slider" tabindex="0" aria-label="播放进度，按方向键调整" aria-valuemin="0" aria-valuemax="41" aria-valuenow="0" title="点击波形可以跳转到该位置"></div>
+<div class="time"><span id="at">0:00</span><span id="total">0:41</span></div>
+<div class="transport"><button class="play" id="play">▶ 开始聆听</button><button class="download" id="save">↓ 保存当前 WAV</button><span class="hint" id="hint" aria-live="polite">点击播放，再切换下方版本，音乐会从同一位置继续。</span></div></div>
+<div class="modes" id="modes"><button class="mode active" data-i="0" aria-pressed="true"><div class="letter">A · ORIGINAL</div><h3>只有旋律</h3><p>自由、偶然、留白。听你之前最喜欢的 A 版原貌。</p></button>
+<button class="mode" data-i="1" aria-pressed="false"><div class="letter">B · STEADY BEAT</div><h3>加入固定鼓点</h3><p>一层简单的底鼓与轻打击乐，让旋律有规律可依靠。</p></button>
+<button class="mode" data-i="2" aria-pressed="false"><div class="letter">C · EMOTIONAL FLOW</div><h3>情绪推动伴奏</h3><p>从稀疏心跳，到节奏增强、低音铺垫，再逐渐收回。</p></button></div>
+<div class="footnote">实验原则：三版使用<strong>完全相同、时间位置不变</strong>的 A 版主旋律。B 只加固定鼓点；C 才加入逐步变化的鼓点、低音与柔和铺底。试听切换不会重新开始。</div></main>
+<section class="thought"><div><div class="dots"><i></i><i></i><i></i></div><strong>这次只判断一件事</strong></div><p>鼓点加入之后，你觉得旋律更有感情，还是反而失去了原来的自由感？尤其听听 C 版中间比较密集的段落，以及最后伴奏退场时的感觉。</p></section>
+<footer>音频通过网站加载 · 首次播放需要点击按钮 · 可以保存原始 WAV。<br>这是音乐表现的对照实验，并不代表系统已经能够理解文字情感。</footer>
+</div><script>
+'use strict';
+const wavFiles=['audio/v07-1.wav','audio/v07-2.wav','audio/v07-3.wav'];
+const flacFiles=['audio/v07-1.flac','audio/v07-2.flac','audio/v07-3.flac'];
+const embedded=document.createElement('audio').canPlayType('audio/flac')?flacFiles:wavFiles;
+let fallingBack=false;
+const wave=[0.0, 0.429, 0.32, 0.463, 0.313, 0.541, 0.351, 0.524, 0.367, 0.324, 0.442, 0.17, 0.034, 0.316, 0.591, 0.372, 0.349, 0.452, 0.308, 0.304, 0.407, 0.361, 0.419, 0.084, 0.417, 0.401, 0.433, 0.522, 0.265, 0.152, 0.405, 0.367, 0.496, 0.19, 0.409, 0.317, 0.087, 0.019, 0.335, 0.376, 0.419, 0.639, 0.326, 0.058, 0.409, 0.503, 0.307, 0.372, 0.597, 0.51, 0.48, 0.542, 0.404, 0.106, 0.021, 0.004, 0.0, 0.473, 0.572, 0.495, 0.546, 0.247, 0.18, 0.427, 0.203, 0.481, 0.584, 0.399, 0.466, 0.431, 0.32, 0.065, 0.011, 0.002, 0.464, 0.289, 0.356, 0.447, 0.471, 0.533, 0.251, 0.041, 0.053, 0.352, 0.124, 0.37, 0.101, 0.016, 0.127, 0.484, 0.341, 0.33, 0.317, 0.527, 0.312, 0.472, 0.614, 0.31, 0.445, 0.328, 0.535, 0.668, 0.49, 0.139, 0.023, 0.468, 0.731, 0.473, 0.101, 0.019, 0.261, 0.423, 0.46, 0.587, 0.637, 0.41, 0.342, 0.5, 0.567, 0.465, 0.505, 0.381, 0.527, 0.28, 0.061, 0.382, 0.5, 0.589, 0.244, 0.52, 0.434, 0.129, 0.02, 0.003, 0.289, 0.453, 0.512, 0.434, 0.657, 0.428, 0.495, 0.44, 0.285, 0.065, 0.012, 0.369, 0.34, 0.388, 0.333, 0.561, 0.334, 0.515, 0.196, 0.029, 0.005, 0.0, 0.0, 0.0, 0.0, 0.0];
+const titles=['A · 原始旋律','B · 固定鼓点','C · 情绪伴奏'];
+const descriptions=['完全保留你上次录音的声音，不加节拍，也不调整停顿。','主旋律不动，只加入规律的底鼓、军鼓与少量沙锤音色。','旋律不动。鼓点由疏到密，低音与和声缓缓进入，最后再次收敛。'];
+const player=embedded.map(src=>{const a=new Audio(src);a.preload='auto';a.volume=0;a.addEventListener('error',()=>{if(!fallingBack){fallingBack=true;location.replace('v07.html');}},{once:true});return a;});
+const duration=40.6837083;let selected=0,playing=false,starting=false,init=false,raf=0,lastSync=0;
+const $=id=>document.getElementById(id),fmt=t=>{t=Math.max(0,Math.floor(t));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0')};
+// Preserve sample alignment across the modes: all three sound files have same samples/duration.
+const waveEl=$('wave');
+const bars=wave.map((e,i)=>{const el=document.createElement('span');el.className='bar';el.style.height=(Math.max(.09,e)*83+4)+'%';waveEl.append(el);return el});
+function pos(){return Math.min(duration,player[selected].currentTime||0)}
+function paint(){const t=pos();$('at').textContent=fmt(t);waveEl.setAttribute('aria-valuenow',String(Math.round(t)));const limit=t/duration*bars.length;bars.forEach((el,i)=>el.classList.toggle('live',i<=limit));}
+function tick(ts){if(!playing)return;paint();if(ts-lastSync>1500){const cur=player[selected].currentTime;for(let i=0;i<3;i++)if(i!==selected && Math.abs(player[i].currentTime-cur)>.12)player[i].currentTime=cur;lastSync=ts;}raf=requestAnimationFrame(tick)}
+function select(n){const old=selected;selected=n;$('nowTitle').textContent=titles[n];$('nowDesc').textContent=descriptions[n];document.querySelectorAll('.mode').forEach((el,i)=>{el.classList.toggle('active',i===n);el.setAttribute('aria-pressed',String(i===n))});if(playing){for(let i=0;i<3;i++)player[i].volume=i===n?1:0;$('hint').textContent='已切换到 '+titles[n]+'，旋律播放位置保持不变。';}else{$('hint').textContent='已选择 '+titles[n]+'。点击播放试听。';}paint()}
+async function play(){if(playing||starting)return;starting=true;$('play').disabled=true;try{const target=pos()>duration-.2?0:pos();player.forEach(a=>a.volume=0);$('hint').textContent='正在准备音频，请稍候。';const result=await Promise.allSettled(player.map(a=>a.play()));if(result.some(r=>r.status==='rejected'))throw new Error('音频未能同时播放，请重试');for(const a of player){try{a.currentTime=target}catch(e){}}player.forEach((a,i)=>a.volume=i===selected?1:0);init=true;playing=true;$('play').textContent='Ⅱ 暂停播放';$('hint').textContent='可以边听边点下面三个版本，直接比较同一时间点。';raf=requestAnimationFrame(tick);}catch(err){player.forEach(a=>a.pause());$('hint').textContent='播放失败：'+err.message+'。请再次点击播放。';}finally{starting=false;$('play').disabled=false;}}
+function pause(){player.forEach(a=>a.pause());playing=false;cancelAnimationFrame(raf);$('play').textContent='▶ 继续聆听';paint();}
+$('play').addEventListener('click',()=>playing?pause():play());
+player[0].addEventListener('ended',()=>{pause();$('play').textContent='↻ 从头再听';$('hint').textContent='播放结束。可以换一个版本，从头再听。'});
+player[1].addEventListener('ended',()=>{if(playing)pause()});player[2].addEventListener('ended',()=>{if(playing)pause()});
+document.querySelectorAll('.mode').forEach(el=>el.addEventListener('click',()=>select(+el.dataset.i)));
+function seek(frac){const t=Math.max(0,Math.min(duration-.05,frac*duration));for(const a of player){try{a.currentTime=t}catch(e){}}paint()}
+waveEl.addEventListener('click',e=>{const b=waveEl.getBoundingClientRect();seek((e.clientX-b.left)/b.width)});
+waveEl.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();seek((pos()+(e.key==='ArrowRight'?2:-2))/duration)}else if(e.key==='Home'){seek(0)}else if(e.key==='End'){seek(.995)}});
+$('save').addEventListener('click',()=>{const a=document.createElement('a');a.href=wavFiles[selected];a.download=['DANNY_节奏实验_A_原始旋律.wav','DANNY_节奏实验_B_固定鼓点.wav','DANNY_节奏实验_C_情绪伴奏.wav'][selected];document.body.append(a);a.click();a.remove();$('hint').textContent='已请求下载当前版本 WAV。';});
+paint();
+</script></body></html>

@@ -67,3 +67,7 @@
 .ip-ringer-moods button:focus-visible{outline:2px solid #e74e47;outline-offset:3px}
 @media(max-width:720px){.ip-story-chapter{margin-bottom:64px}.ip-story-head{display:block;margin:0 6%;padding-bottom:18px}.ip-story-head h3{margin:7px 0}.ip-story-head p{margin:0}.ip-story-grid{display:block}.ip-story-grid figure{margin-bottom:28px}.ip-story-grid figure:first-child,.ip-story-grid figure:last-child:nth-child(4){grid-column:auto}.ip-story-grid img{aspect-ratio:auto}.ip-story-grid figcaption{margin:0 6%}.ip-ringer-theatre{margin-top:64px;padding:22px 6%}.ip-ringer-title{display:block}.ip-ringer-title h3{margin:8px 0}.ip-ringer-title p{margin:0}.ip-ringer-live{min-height:380px}.ip-ringer-live img{width:min(77vw,330px)}.ip-ringer-live:before{font-size:17vw;bottom:15%}.ip-ringer-live-caption{right:18px;bottom:16px}.ip-ringer-live-index{left:17px;top:16px}.ip-ringer-moods,.ip-ringer-moods[data-count="15"]{grid-template-columns:repeat(3,minmax(0,1fr))}.ip-ringer-moods button{min-width:0;min-height:64px}}
 @media(prefers-reduced-motion:reduce){.ip-ringer-pop img{animation:none}.ip-ringer-moods button{transition:none}}
+
+@media (max-width: 720px) and (orientation: portrait) {
+ .ip-art img {object-fit: contain;object-position: center}
+}
