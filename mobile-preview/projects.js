@@ -92,7 +92,7 @@ export const projects = [
     ]
   },
   {
-    id: 'resonance', number: '04', label: '共鸣实验室', english: 'DANNY RESONANCE LAB', entry: './resonance/index.html?v=20261028-back1',
+    id: 'resonance', number: '04', label: '共鸣实验室', english: 'DANNY RESONANCE LAB', entry: './resonance/index.html?v=20261108-all1',
     title: '写一点文字，\n听见音乐的回应。', short: '共鸣实验室',
     description: '从自由打字到旋律编辑，十个可直接玩的声音实验。',
     status: '开放试玩', type: 'tech', color: '#a1d5c7', cover: 'assets/portfolio/resonance-cover.svg', thumbnail: 'assets/portfolio/resonance-cover.svg',
@@ -103,7 +103,7 @@ export const projects = [
       ['再动手修改', '在不同版本里录音、锁定音符、调整节奏，试听并采用新的旋律发展。'],
       ['自由探索十个体验', '各版本保留独立玩法；切换时会结束当前演奏，创作内容可用版本内的保存或导出功能留存。']
     ],
-    link: './resonance/index.html?v=20261028-back1', linkLabel: '进入共鸣实验室',
+    link: './resonance/index.html?v=20261108-all1', linkLabel: '进入共鸣实验室',
     coverAlt: '深色背景中的青绿色声波与共鸣圆环', coverCaption: '共鸣实验室 · 10 个开放试玩体验'
   },
   {
