@@ -117,3 +117,6 @@ body.world-transitioning{overflow:hidden}
  .road-cover-copy button {bottom: calc(50dvh - min(25.93vw, 46.07dvh) - 48px);width: max(120px, min(19.5vw, 34.65dvh));height: max(44px, min(3.41vw, 6.06dvh));border-color: #ffffff9c;background: #10213ded;color: #fff}
  .road-cover-copy button::after {content: "进入沿途放映";font-size: 14px;letter-spacing: .06em}
 }
+
+.road-cover-copy button[data-loading] {border-color:#ffffff9c;background:#10213ded;color:#fff}
+.road-cover-copy button[data-loading]::after {content:"正在准备公路…";font-size:14px;letter-spacing:.06em}

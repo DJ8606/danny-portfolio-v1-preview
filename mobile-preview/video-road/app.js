@@ -7,9 +7,20 @@ const settings=window.DANNY_SETTINGS||{};
 canvas.width=W; canvas.height=H; // Explicit logical resolution; browser default 300×150 is invalid here.
 const src={'landscape':'assets/cinematic_world_v11.webp','car':'assets/car_original_style.png','rear':'assets/hub_rear_registered.png','front':'assets/hub_front_registered.png','asphalt':'assets/asphalt_v08.webp','transitionNative':'assets/transition_forest_native.png'};
 const mobileImages=window.matchMedia('(max-width: 720px), (pointer: coarse)').matches?{landscape:'assets/mobile/cinematic_world_v11.webp',car:'assets/mobile/car_original_style.webp',...Object.fromEntries(scenicRoute.chunks.map((c,i)=>['scenic'+i,'assets/mobile/'+c.file.split('/').pop()]))}:{car:'assets/car-original-desktop.webp'};
-function loadImage(key,url){const im=new Image(),inline=window.DANNY_INLINE_ASSETS&&window.DANNY_INLINE_ASSETS[key];if(!inline&&mobileImages[key])im.addEventListener('error',()=>{im.src=url;},{once:true});im.src=inline||mobileImages[key]||url;images[key]=im;}
-for(const [key,url] of Object.entries(src))loadImage(key,url);
-const scenicChunks=scenicRoute.chunks.map((c,i)=>{const key='scenic'+i;loadImage(key,c.file);return {...c,key};});
+const deferredImageStarts=[],initialImageLoads=[],allImageLoads=[];
+function startDeferredImages(){for(const start of deferredImageStarts.splice(0))start();}
+function loadImage(key,url,defer=false){
+ const im=new Image(),inline=window.DANNY_INLINE_ASSETS&&window.DANNY_INLINE_ASSETS[key];let fallback=Boolean(!inline&&mobileImages[key]),finish;
+ const completed=new Promise(resolve=>{finish=resolve;});
+ im.onload=()=>finish(true);
+ im.onerror=()=>{if(fallback){fallback=false;im.src=url;return;}if(key==='scenic0')startDeferredImages();finish(false);};
+ images[key]=im;const start=()=>{im.src=inline||mobileImages[key]||url;};if(defer)deferredImageStarts.push(start);else start();return completed;
+}
+const initialKeys=new Set(['car','rear','front','asphalt']);if(!scenicRoute.chunks.length)initialKeys.add('landscape');
+for(const [key,url] of Object.entries(src)){const first=initialKeys.has(key),done=loadImage(key,url,!first);allImageLoads.push(done);if(first)initialImageLoads.push(done);}
+const scenicChunks=scenicRoute.chunks.map((c,i)=>{const key='scenic'+i,done=loadImage(key,c.file,i!==0);allImageLoads.push(done);if(i===0)initialImageLoads.push(done);return {...c,key};});
+const firstSceneReady=new Promise(resolve=>{let settled=false;const timeout=setTimeout(()=>{if(!settled){settled=true;resolve(false);}},12000);Promise.all(initialImageLoads).then(results=>{if(settled)return;settled=true;clearTimeout(timeout);resolve(results.every(Boolean));});});
+firstSceneReady.then(startDeferredImages);
 // World-coordinate scene anchors. The same map image persists for the entire trip.
 const carriers=Array.isArray(window.DANNY_PORTALS)&&window.DANNY_PORTALS.length?window.DANNY_PORTALS:[];
 const carrierIds=new Set(carriers.map(x=>x.id));
@@ -19,6 +30,7 @@ const works=(Array.isArray(window.DANNY_WORKS)?window.DANNY_WORKS:[]).map((w,i)=
  portal:carrierIds.has(w.portal)?w.portal:(carriers.find(c=>c.kind===w.carrier)?.id||carriers[i%carriers.length]?.id)
 }));
 const state={worldX:300,speed:95,cruise:true,paused:false,t:0,last:0,angle:0,near:null,full:false,radioOn:false,station:0,viewer:false};
+let sceneStarted=false;
 let camera=0,pickedURL=null,localAudioURL=null,audio=null,synth=null,activeWork=null;
 const bird=$('#road-diaoge'),birdNote=$('#road-diaoge-note');let birdPose=null,birdTimer;
 function startBird(){
@@ -26,9 +38,10 @@ function startBird(){
  const instance=new window.DiaoGePose({canvas:bird.querySelector('canvas'),pointerTarget:$('#app'),basePath:'../assets/diaoge',sensitivity:.45,smoothing:150});birdPose=instance;
  instance.start().then(ok=>{if(birdPose!==instance)instance.destroy();else if(ok)bird.classList.add('loaded');});
 }
-startBird();
+function loadBird(){const img=bird.querySelector('img');if(img?.dataset.src&&!img.getAttribute('src'))img.src=img.dataset.src;startBird();}
+firstSceneReady.then(loadBird);
 window.addEventListener('pagehide',()=>{birdPose?.destroy();birdPose=null;});
-window.addEventListener('pageshow',event=>{if(event.persisted)startBird();});
+window.addEventListener('pageshow',event=>{if(event.persisted)loadBird();});
 bird.addEventListener('click',()=>{birdPose?.react();birdNote.hidden=false;clearTimeout(birdTimer);birdTimer=setTimeout(()=>{birdNote.hidden=true;},2400);});
 function positionBird(){
  const rect=canvas.getBoundingClientRect(),host=$('#app').getBoundingClientRect(),width=rect.width,height=rect.height,offsetX=rect.left-host.left,offsetY=rect.top-host.top;
@@ -241,7 +254,7 @@ function render(){camera=clamp(state.worldX-420,0,WORLD_WIDTH-W);ctx.clearRect(0
  if(state.near)$('#prompt-name').textContent=state.near.label;
 }
 function frame(now){if(!state.last)state.last=now;const dt=Math.min((now-state.last)/1000,.045);state.last=now;
- if(!state.paused&&!state.viewer){if(state.cruise&&state.speed>=0&&state.speed<135)state.speed=Math.min(135,state.speed+16*dt);const next=state.worldX+state.speed*dt;state.worldX=next>END?300+(next-END):next<300?END-(300-next):next;state.angle+=state.speed*dt/35;state.t+=dt;}
+ if(sceneStarted&&!state.paused&&!state.viewer){if(state.cruise&&state.speed>=0&&state.speed<135)state.speed=Math.min(135,state.speed+16*dt);const next=state.worldX+state.speed*dt;state.worldX=next>END?300+(next-END):next<300?END-(300-next):next;state.angle+=state.speed*dt/35;state.t+=dt;}
  render();requestAnimationFrame(frame);
 }
 function openCarrier(c){const list=carrierWorks(c);if(!list.length){toast('这个载体目前尚未绑定视频');return;}activeWork=list[0];notifyHost('DANNY_ROAD_OPEN_WORK',{portal:c.id,count:list.length});$('#viewer').hidden=false;state.viewer=true;state.paused=true;
@@ -263,24 +276,24 @@ window.addEventListener('keydown',e=>{if(e.target===bird&&e.key===' ')return;if(
 $('#touch-slow').onclick=driveBackward;$('#touch-fast').onclick=()=>setSpeed(30);$('#touch-portal').onclick=()=>{if(state.near)openCarrier(state.near);};
 $('#btn-full').onclick=()=>{if(!document.fullscreenElement)$('#app').requestFullscreen?.();else document.exitFullscreen?.();};
 // Three original synthetic radio settings; no remote API, local files override.
-let audioCtx=null,oscillators=[],gains=[],radioFile=new Audio();radioFile.loop=true;
+let audioCtx=null,oscillators=[],gains=[],radioFile=new Audio(),radioTouched=false;radioFile.loop=true;
 function startSynth(){if(audioCtx)return;const Actx=window.AudioContext||window.webkitAudioContext;if(!Actx){toast('浏览器不支持 WebAudio');return;}audioCtx=new Actx();const names=['sine','triangle','sine','sine'];for(let i=0;i<4;i++){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type=names[i];g.gain.value=0;o.connect(g);g.connect(audioCtx.destination);o.start();oscillators.push(o);gains.push(g);}}
 function updateRadio(){const s=stations[state.station];$('#station').textContent=s.name;for(let i=0;i<oscillators.length;i++){oscillators[i].frequency.setTargetAtTime(s.chord[i]/(i===0?2:1),audioCtx.currentTime,.7);gains[i].gain.setTargetAtTime(state.radioOn&&!localAudioURL&&!s.file?[.028,.018,.013,.009][i]:0,audioCtx.currentTime,.5);}}
 function resetMusic(){state.radioOn=false;radioFile.pause();if(audioCtx)updateRadio();$('#btn-radio').textContent='▶ 播放';$('#btn-mute').textContent='♫ MUSIC';}
 function toggleMusic(){state.radioOn=!state.radioOn;if(state.radioOn){startSynth();audioCtx?.resume();const stationFile=localAudioURL||stations[state.station].file;if(stationFile){if(radioFile.src!==new URL(stationFile,document.baseURI).href)radioFile.src=stationFile;radioFile.play().catch(()=>{resetMusic();toast('浏览器拦截了自动播放，请再次点击播放');});}else updateRadio();}else resetMusic();$('#btn-radio').textContent=state.radioOn?'Ⅱ 暂停':'▶ 播放';$('#btn-mute').textContent=state.radioOn?'♫ ON':'♫ MUSIC';}
-$('#btn-radio').onclick=toggleMusic;$('#btn-mute').onclick=toggleMusic;$('#btn-next-radio').onclick=()=>{state.station=(state.station+1)%stations.length;
+$('#btn-radio').onclick=()=>{radioTouched=true;toggleMusic();};$('#btn-mute').onclick=()=>{radioTouched=true;toggleMusic();};$('#btn-next-radio').onclick=()=>{radioTouched=true;state.station=(state.station+1)%stations.length;
  localAudioURL=null;radioFile.pause();radioFile.removeAttribute('src');radioFile.load();
  const song=stations[state.station].file;
  if(state.radioOn&&song){radioFile.src=song;radioFile.play().catch(()=>{resetMusic();toast('音频播放失败，请点击播放重试');});}
  if(!audioCtx&&state.radioOn)startSynth();if(audioCtx)updateRadio();else $('#station').textContent=stations[state.station].name;
 };
-$('#pick-music').onchange=e=>{const f=e.target.files?.[0];if(!f)return;if(localAudioURL)URL.revokeObjectURL(localAudioURL);localAudioURL=URL.createObjectURL(f);radioFile.src=localAudioURL;if(!state.radioOn){state.radioOn=true;startSynth();}updateRadio();radioFile.play().catch(()=>{});$('#station').textContent=f.name;$('#btn-radio').textContent='Ⅱ 暂停';};
+$('#pick-music').onchange=e=>{const f=e.target.files?.[0];if(!f)return;radioTouched=true;if(localAudioURL)URL.revokeObjectURL(localAudioURL);localAudioURL=URL.createObjectURL(f);radioFile.src=localAudioURL;if(!state.radioOn){state.radioOn=true;startSynth();}updateRadio();radioFile.play().catch(()=>{});$('#station').textContent=f.name;$('#btn-radio').textContent='Ⅱ 暂停';};
 // Embedded inside the six-face site: a tiny, explicit postMessage contract.
 function notifyHost(type,payload){if(window.parent!==window)window.parent.postMessage({source:'DANNY_ROAD',type,...payload},'*');}
 $('#btn-exit').onclick=()=>{if(window.parent!==window){notifyHost('DANNY_ROAD_EXIT',{});return;}
  if(settings.homeUrl){window.location.href=settings.homeUrl;}else toast('在六面网站中可由这里返回总站；当前为独立试玩');};
 const routeMap=$('#route-map');const wasPaused=()=>state.paused;
-function mapOpen(){state.mapWasPaused=wasPaused();state.paused=true;routeMap.hidden=false;buildMap();}
+function mapOpen(){startDeferredImages();state.mapWasPaused=wasPaused();state.paused=true;routeMap.hidden=false;buildMap();}
 function mapClose(){routeMap.hidden=true;state.paused=Boolean(state.mapWasPaused);}
 $('#btn-map').onclick=()=>routeMap.hidden?mapOpen():mapClose();$('#map-close').onclick=mapClose;
 $('#btn-guide').onclick=()=>toast('← 减速　→ 加速　空格暂停　E 进入作品　M 音乐　Esc 关闭作品');
@@ -297,13 +310,14 @@ window.addEventListener('message',event=>{if(event.source!==window.parent||!even
  if(event.data.type==='PAUSE')state.paused=true;
  if(event.data.type==='RESUME'&&!state.viewer&&!routeMap.hidden)return;
  if(event.data.type==='RESUME'&&!state.viewer)state.paused=false;
- if(event.data.type==='GO_TO'&&Number.isFinite(event.data.x)){state.worldX=clamp(event.data.x,300,END);state.last=0;}
+ if(event.data.type==='GO_TO'&&Number.isFinite(event.data.x)){startDeferredImages();state.worldX=clamp(event.data.x,300,END);state.last=0;}
 });
 radioFile.addEventListener('error',()=>{if(state.radioOn&&!localAudioURL){toast('电台音频缺失，已使用合成电台');if(audioCtx)updateRadio();}});
-if(new URLSearchParams(location.search).get('autoplay')==='1')toggleMusic();
+function autoplayAfterScene(){if(new URLSearchParams(location.search).get('autoplay')==='1'&&!radioTouched)toggleMusic();}
 // A QA-only hook, not a user-facing transition picker. ?qa=1 opens no UI.
 window.DANNY_QA={scenicChapters(){return scenicRoute.chapters},worldWidth:WORLD_WIDTH,mapPortals(){return carriers.map(c=>({id:c.id,x:c.at,count:carrierWorks(c).length}));},transitionZones(){return visibleTransitionZones().map(z=>({id:z.id,at:z.at,x:z.x,width:z.width,top:OCCLUSION_TOP,bottom:OCCLUSION_TOP+OCCLUSION_HEIGHT}));},go(x){state.worldX=clamp(x,300,END);state.paused=true;state.speed=0;render();},drive(x,spd){state.worldX=clamp(x,300,END);state.paused=false;state.speed=spd;state.cruise=false;state.last=0;}, wheelPoints(){const s=444/carMeta.sourceW;const y=742-carMeta.tireBottomTop*s;return carMeta.wheels.map(a=>({asset:a.asset,...positionWheel(a,323,y,s)}));},get foreground(){return visibleTransitionZones()},state,carriers,works,render};
-Promise.all(Object.values(images).map(im=>new Promise(r=>{if(im.complete)r();else{im.onload=r;im.onerror=r;}}))).then(()=>toast('连续地貌已加载 · 向右出发'));
+Promise.all(allImageLoads).then(()=>toast('连续地貌已加载 · 向右出发'));
+firstSceneReady.then(()=>{sceneStarted=true;notifyHost('DANNY_ROAD_SCENE_READY',{});autoplayAfterScene();});
 notifyHost('DANNY_ROAD_READY',{version:'Scenic Expanded V12',portals:carriers.length,works:works.length,scenes:scenicRoute.chapters.length});
 requestAnimationFrame(frame);
 })();
