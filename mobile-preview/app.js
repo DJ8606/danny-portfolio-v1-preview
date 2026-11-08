@@ -1,5 +1,5 @@
 import { projects, getProject } from './projects.js?v=20261030-v03';
-import { productionPage, initProduction } from './idea-v03-host.js?v=20261030-phone3';
+import { productionPage, initProduction } from './idea-v03-host.js?v=20261108-portrait1';
 import { ipPage, initIpPage } from './ip-stage.js?v=20261018-ipstory6';
 import { Dice } from './dice.js?v=20261005-0101';
 import { voyagePage, initVoyage } from './voyage.js?v=20261019-entry1';
@@ -131,7 +131,7 @@ function labPage(){
 }
 
 function roadPage(){
-  return `<section class="road-host" aria-label="DANNY · ON THE ROAD"><div class="road-cover" id="road-cover" role="dialog" aria-modal="true" aria-labelledby="road-cover-title"><picture><source media="(max-width: 720px)" type="image/webp" srcset="./assets/portfolio/danny-road-cover-mobile.webp"><img src="./assets/portfolio/danny-road-cover.png" alt="DANNY ON THE ROAD 沿途放映海岸公路日落封面"></picture><div class="road-cover-shade" aria-hidden="true"></div><div class="road-cover-copy"><span class="sr-only" id="road-cover-title">DANNY · ON THE ROAD · 沿途放映</span><button id="road-enter" type="button" aria-label="进入沿途放映"><span class="sr-only">PRESS ENTER</span></button></div></div><iframe id="road-frame" data-src="./video-road/index.html?v=20261108-mobile1&amp;autoplay=1" title="DANNY · ON THE ROAD" allow="fullscreen; autoplay" hidden></iframe></section>`;
+  return `<section class="road-host" aria-label="DANNY · ON THE ROAD"><div class="road-cover" id="road-cover" role="dialog" aria-modal="true" aria-labelledby="road-cover-title"><picture><source media="(max-width: 720px)" type="image/webp" srcset="./assets/portfolio/danny-road-cover-mobile.webp"><img src="./assets/portfolio/danny-road-cover.png" alt="DANNY ON THE ROAD 沿途放映海岸公路日落封面"></picture><div class="road-cover-shade" aria-hidden="true"></div><div class="road-cover-copy"><span class="sr-only" id="road-cover-title">DANNY · ON THE ROAD · 沿途放映</span><button id="road-enter" type="button" aria-label="进入沿途放映"><span class="sr-only">PRESS ENTER</span></button></div></div><iframe id="road-frame" data-src="./video-road/index.html?v=20261108-portrait1&amp;autoplay=1" title="DANNY · ON THE ROAD" allow="fullscreen; autoplay" hidden></iframe></section>`;
 }
 
 function initRoad(){

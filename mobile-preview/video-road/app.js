@@ -31,11 +31,12 @@ window.addEventListener('pagehide',()=>{birdPose?.destroy();birdPose=null;});
 window.addEventListener('pageshow',event=>{if(event.persisted)startBird();});
 bird.addEventListener('click',()=>{birdPose?.react();birdNote.hidden=false;clearTimeout(birdTimer);birdTimer=setTimeout(()=>{birdNote.hidden=true;},2400);});
 function positionBird(){
- const width=canvas.clientWidth,height=canvas.clientHeight,x=(1530-camera)/W*width,y=398/H*height,bw=Math.max(44,80/W*width),bh=bw*540/390;
- bird.hidden=x < -bw || x > width+bw || state.viewer || !$('#route-map').hidden;
+ const rect=canvas.getBoundingClientRect(),host=$('#app').getBoundingClientRect(),width=rect.width,height=rect.height,offsetX=rect.left-host.left,offsetY=rect.top-host.top;
+ const localX=(1530-camera)/W*width,x=offsetX+localX,y=offsetY+398/H*height,bw=Math.max(44,80/W*width),bh=bw*540/390;
+ bird.hidden=localX < -bw || localX > width+bw || state.viewer || !$('#route-map').hidden;
  if(bird.hidden)birdNote.hidden=true;
  bird.style.width=bw+'px';bird.style.left=(x-bw/2)+'px';bird.style.top=(y-bh)+'px';
- birdNote.style.left=Math.max(0,Math.min(width-150,x+bw/2))+'px';birdNote.style.top=(y-bh)+'px';
+ birdNote.style.left=(offsetX+Math.max(0,Math.min(width-150,localX+bw/2)))+'px';birdNote.style.top=(y-bh)+'px';
 }
 
 const stations=(Array.isArray(window.DANNY_RADIOS)&&window.DANNY_RADIOS.length?window.DANNY_RADIOS:[{name:'SUNSET FM',chord:[220,261.63,329.63,440]}]);
