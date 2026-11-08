@@ -34,6 +34,7 @@ window.DANNY_WORKS = [
     "title": "04 · 天空航线",
     "portal": "sky-plane",
     "file": "media/video/portfolio-clip-01.mp4",
+    "desktopFile": "media/video/desktop/portfolio-clip-01-desktop.mp4",
     "mobileFile": "media/video/mobile/portfolio-clip-01-mobile.mp4",
     "poster": "media/video/portfolio-clip-01-poster.jpg",
     "category": "广告视频"
@@ -43,6 +44,7 @@ window.DANNY_WORKS = [
     "title": "05 · 来自宇宙的信",
     "portal": "forest-ufo",
     "file": "media/video/portfolio-clip-02.mp4",
+    "desktopFile": "media/video/desktop/portfolio-clip-02-desktop.mp4",
     "mobileFile": "media/video/mobile/portfolio-clip-02-mobile.mp4",
     "poster": "media/video/portfolio-clip-02-poster.jpg",
     "category": "AI实验"
