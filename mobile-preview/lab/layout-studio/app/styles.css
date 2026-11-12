@@ -260,3 +260,16 @@ dd { margin: 0; color: #d8d4c8; }
     grid-template-columns: 1fr;
   }
 }
+
+/* DANNY workshop mobile */
+@media (max-width:720px){
+ .shell{padding:12px;gap:12px}
+ .input-panel{padding:14px}
+ .hero-preview{display:flex;flex-direction:column;gap:12px;padding:14px;overflow:visible}
+ #mainCanvas{display:block;width:min(100%,520px);max-width:100%;max-height:none}
+ .hero-copy{position:static;max-width:none;width:100%}
+ .cards{grid-template-columns:minmax(0,1fr)}
+ .card{grid-template-columns:minmax(72px,112px) minmax(0,1fr)}
+ .card canvas{width:100%;height:auto}
+ textarea,select{font-size:16px}
+}
