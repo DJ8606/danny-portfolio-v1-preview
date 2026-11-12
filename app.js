@@ -127,7 +127,7 @@ function catalog(){
 }
 
 function labPage(){
-  return `<section class="lab-host" aria-label="DANNY 制作工坊"><div class="lab-host-bar"><span>DANNY LAB / 制作工坊</span><a href="#/">← 回到六面</a></div><iframe id="lab-frame" src="./lab/index.html?embedded=1&amp;v=20261028-labfix1" title="DANNY 制作工坊" allow="autoplay"></iframe></section>`;
+  return `<section class="lab-host" aria-label="DANNY 制作工坊"><div class="lab-host-bar"><span>DANNY LAB / 制作工坊</span><a href="#/">← 回到六面</a></div><iframe id="lab-frame" src="./lab/index.html?embedded=1&amp;v=20261112-workshop2" title="DANNY 制作工坊" allow="autoplay"></iframe></section>`;
 }
 
 function roadPage(){
